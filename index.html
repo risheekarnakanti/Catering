@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanam Catering</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="splash-screen">
+        <img src="images/vanam.png" alt="Vanam Catering Logo" class="splash-image">
+        <button id="enter-app-btn" class="btn-primary">Enter Catering App</button>
+    </div>
+    <header class="app-header">
+        <h1>Vanam Catering</h1>
+        <nav>
+            <a href="index.html" class="active">Take Order</a>
+            <a href="orders.html">View Orders</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
+    <main class="container">
+        <div class="form-container">
+            <h2>Create a New Catering Order</h2>
+            <form id="new-order-form">
+                <fieldset>
+                    <legend>Customer Information</legend>
+                    <div class="form-group">
+                        <label for="customer-name">Customer Name</label>
+                        <input type="text" id="customer-name" name="customer-name" placeholder="e.g., John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-phone">Phone Number</label>
+                        <input type="tel" id="customer-phone" name="customer-phone" placeholder="e.g., (555) 123-4567" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-email">Email Address</label>
+                        <input type="email" id="customer-email" name="customer-email" placeholder="e.g., john@example.com" required>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Order Details</legend>
+                    <div class="form-group">
+                        <label for="delivery-date">Delivery Date</label>
+                        <input type="date" id="delivery-date" name="delivery-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="delivery-time">Delivery Time</label>
+                        <input type="time" id="delivery-time" name="delivery-time" required>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend class="legend-with-action">
+                        <span>Menu Items</span>
+                        <a href="admin.html" class="btn-add-item">+ Add New Item</a>
+                    </legend>
+                    <div id="menu-items-container">
+                        <p>Loading menu...</p>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Delivery Option</legend>
+                    <div class="form-group">
+                        <label>
+                            <input type="radio" name="delivery-type" value="Pickup" checked> Pickup
+                        </label>
+                        <label>
+                            <input type="radio" name="delivery-type" value="Delivery"> Restaurant Delivery
+                        </label>
+                    </div>
+                    <div class="form-group" id="delivery-address-group" style="display:none;">
+                        <label for="delivery-address">Delivery Address</label>
+                        <div class="address-input-wrapper" style="position: relative; width: 100%;">
+                            <textarea id="delivery-address" name="delivery-address" rows="3" placeholder="e.g., 123 Main St, Apt 4B, Springfield, NY 12345" required></textarea>
+                            <div id="address-suggestions" class="address-suggestions-dropdown"></div>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <!-- Cart Items Display Section (below delivery option) -->
+                <div id="cart-display-section" class="cart-display-section">
+                    <fieldset>
+                        <legend>Your Cart Items</legend>
+                        <div id="cart-items-container" class="cart-items-container"></div>
+                    </fieldset>
+                </div>
+                
+                <div id="discount-section" class="discount-section" style="display: none;">
+                    <fieldset>
+                        <legend>Cash Discount</legend>
+                        <div class="form-group">
+                            <label>Select Discount Option</label>
+                            <div class="discount-options">
+                                <label class="discount-option-label">
+                                    <input type="radio" name="cash-discount" value="0" checked>
+                                    <span>No Discount</span>
+                                </label>
+                                <label class="discount-option-label">
+                                    <input type="radio" name="cash-discount" value="5">
+                                    <span>5% Cash Discount</span>
+                                </label>
+                                <label class="discount-option-label">
+                                    <input type="radio" name="cash-discount" value="10">
+                                    <span>10% Manager Approved</span>
+                                </label>
+                            </div>
+                            <div id="discount-summary" class="discount-summary"></div>
+                        </div>
+                    </fieldset>
+                </div>
+                
+                <fieldset>
+                    <legend>Special Instructions</legend>
+                    <div class="form-group">
+                        <label for="specifications">Customer Specifications & Allergies</label>
+                        <textarea id="specifications" name="specifications" rows="4" placeholder="e.g., Allergen information..."></textarea>
+                    </div>
+                </fieldset>
+                
+                <button type="submit" class="btn-primary">Save Order</button>
+            </form>
+        </div>
+    </main>
+    <script src="js/app.js"></script>
+</body>
+</html>

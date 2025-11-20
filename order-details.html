@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - CateringApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>CateringApp</h1>
+        <nav>
+            <a href="index.html">Take Order</a>
+            <a href="orders.html">View Orders</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- This ID needs to be exactly correct for the JavaScript to find it -->
+        <button id="print-order-btn" class="btn-secondary" style="float:right; margin-bottom: 16px;">🖨️ Print</button>
+        <div id="order-details-container" class="form-container">
+            <!-- Order details will be rendered here by JS, including delivery type and address -->
+            <h2>Order Details</h2>
+            <p>Loading order details...</p>
+        </div>
+    </main>
+    
+    <script src="js/app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var printBtn = document.getElementById('print-order-btn');
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                window.print();
+            });
+        }
+    });
+    </script>
+    <style>
+    @media print {
+        #print-order-btn { display: none !important; }
+        .app-header, nav, .btn-secondary { display: none !important; }
+        body, .container, .form-container { box-shadow: none !important; background: #fff !important; }
+    }
+    </style>
+
+</body>
+</html>

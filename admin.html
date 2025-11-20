@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - CateringApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <h1>CateringApp</h1>
+        <nav>
+            <a href="index.html">Take Order</a>
+            <a href="orders.html">View Orders</a>
+            <a href="admin.html" class="active">Admin</a>
+        </nav>
+    </header>
+    <main class="container">
+        <div class="orders-container" style="margin-bottom: 30px;">
+            <h2>Current Menu Items</h2>
+            <div id="current-menu-list">
+                <p>Loading current menu...</p>
+            </div>
+        </div>
+        <div class="form-container">
+            <h2>Add a New Menu Item</h2>
+            <form id="new-menu-item-form">
+                <fieldset>
+                    <legend>Item Details</legend>
+                    <div class="form-group">
+                        <label for="item-name">Item Name</label>
+                        <input type="text" id="item-name" placeholder="e.g., Paneer Butter Masala" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-description">Description</label>
+                        <textarea id="item-description" rows="3" placeholder="A short description of the item."></textarea>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Pricing by Size</legend>
+                    <div id="pricing-container">
+                        <div class="pricing-row">
+                            <input type="text" class="pricing-size-name" placeholder="Size Name (e.g., Half Tray)" required>
+                            <input type="number" class="pricing-price" step="0.01" placeholder="Price" required>
+                            <button type="button" class="btn-remove-price" disabled>&times;</button>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-add-price" class="btn-secondary" style="margin-top: 15px;">+ Add Another Size</button>
+                </fieldset>
+                <button type="submit" class="btn-primary">Save New Item</button>
+            </form>
+        </div>
+    </main>
+    <script src="js/app.js"></script>
+</body>
+</html>

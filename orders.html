@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Orders - CateringApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>Vanam Catering</h1>
+        <nav>
+            <a href="index.html">Take Order</a>
+            <a href="orders.html" class="active">View Orders</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="orders-container">
+            <h2>View Orders by Day</h2>
+            <div class="date-selector">
+                <label for="view-date">Select a Date:</label>
+                <input type="date" id="view-date" name="view-date">
+            </div>
+            <div id="orders-list">
+                <p>Select a date to view orders.</p>
+            </div>
+        </div>
+    </main>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>
