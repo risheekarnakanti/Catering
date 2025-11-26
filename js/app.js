@@ -5,80 +5,329 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize cart
     window.orderCart = [];
 
-    // ===== NOTIFICATION SYSTEM =====
-    window.showNotification = function(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = message;
-        
-        // Set styles based on type
-        let bgColor, borderColor, icon;
-        if (type === 'success') {
-            bgColor = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-            borderColor = '#20c997';
-            icon = '✓';
-        } else if (type === 'error') {
-            bgColor = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
-            borderColor = '#c82333';
-            icon = '✕';
-        } else {
-            bgColor = 'linear-gradient(135deg, #4a90e2 0%, #50e3c2 100%)';
-            borderColor = '#50e3c2';
-            icon = 'ℹ';
-        }
-        
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 8px;
+    // ===== ENHANCED NOTIFICATION SYSTEM =====
+    // Inject styles for notifications programmatically
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .notification {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            padding: 18px 28px;
+            border-radius: 16px;
+            color: white !important;
             font-weight: 600;
             font-size: 15px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            background: ${bgColor};
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 4px 8px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            z-index: 99999 !important;
+            transform: translateX(120%) scale(0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 350px;
+            min-width: 280px;
+            display: flex !important;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+            left: auto !important;
+            bottom: auto !important;
+        }
+        
+        .notification::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            opacity: 0.9;
+            z-index: -1;
+        }
+        
+        .notification::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0) scale(1);
+        }
+        
+        .notification.show::after {
+            left: 100%;
+        }
+        
+        .notification-icon {
+            font-size: 24px;
+            animation: bounceIn 0.6s ease;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            min-width: 24px;
+        }
+        
+        .notification-content {
+            flex: 1;
+            line-height: 1.4;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .notification-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #40e0d0 100%) !important;
+            border-left: 4px solid #40e0d0 !important;
+            animation: successPulse 0.6s ease;
+            box-shadow: 0 8px 32px rgba(40, 167, 69, 0.4), 0 4px 8px rgba(40, 167, 69, 0.2) !important;
+        }
+        
+        .notification-error {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 50%, #ff6b6b 100%);
+            border-left: 4px solid #ff6b6b;
+            animation: errorShake 0.6s ease;
+        }
+        
+        .notification-info {
+            background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 50%, #fff59d 100%);
+            border-left: 4px solid #fff59d;
+            animation: infoSlide 0.5s ease;
+        }
+        
+        .notification-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
             color: white;
-            border-left: 4px solid ${borderColor};
-            max-width: 400px;
-            word-wrap: break-word;
-        `;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
         
-        document.body.appendChild(notification);
+        .notification-close:hover {
+            background: rgba(255,255,255,0.3);
+            opacity: 1;
+            transform: scale(1.1);
+        }
         
-        // Auto-remove after 3 seconds
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease-in';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    };
-
-    // Add animations to page
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
+        @keyframes bounceIn {
+            0% { transform: scale(0.3) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(-10deg); }
+            70% { transform: scale(0.9) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        @keyframes successPulse {
+            0%, 100% { 
+                box-shadow: 0 8px 32px rgba(40, 167, 69, 0.4), 0 4px 8px rgba(40, 167, 69, 0.2);
+                transform: scale(1);
             }
-            to {
-                transform: translateX(0);
-                opacity: 1;
+            50% { 
+                box-shadow: 0 12px 40px rgba(64, 224, 208, 0.6), 0 0 25px rgba(64, 224, 208, 0.4);
+                transform: scale(1.02);
             }
         }
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
+        
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        @keyframes infoSlide {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 0 0 16px 16px;
+            animation: progressBar 3s linear;
+        }
+        
+        @keyframes progressBar {
+            0% { width: 100%; }
+            100% { width: 0%; }
+        }
+        
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                transform: translateY(-120%) scale(0.9);
             }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
+            
+            .notification.show {
+                transform: translateY(0) scale(1);
             }
         }
     `;
     document.head.appendChild(style);
+
+    window.showNotification = function(message, type = 'info', duration = 4000) {
+        // Debug logging
+        console.log('showNotification called:', { message, type, duration });
+        
+        // Remove existing notifications to prevent stacking
+        const existing = document.querySelector('.notification');
+        if (existing) {
+            console.log('Removing existing notification');
+            existing.style.transform = 'translateX(120%) scale(0.8)';
+            existing.style.opacity = '0';
+            setTimeout(() => existing.remove(), 200);
+        }
+
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        // Force specific styles to override any conflicts
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '99999';
+        notification.style.left = 'auto';
+        notification.style.bottom = 'auto';
+        
+        console.log('Notification class:', notification.className);
+        
+        // Enhanced icons with emojis and symbols
+        let icon;
+        if (type === 'success') {
+            const successIcons = ['🎉', '✨', '🌟', '💚', '🎊'];
+            icon = successIcons[Math.floor(Math.random() * successIcons.length)];
+        } else if (type === 'error') {
+            const errorIcons = ['❌', '🚨', '⚠️', '💥', '🔥'];
+            icon = errorIcons[Math.floor(Math.random() * errorIcons.length)];
+        } else {
+            const infoIcons = ['💡', 'ℹ️', '🔔', '📢', '💬'];
+            icon = infoIcons[Math.floor(Math.random() * infoIcons.length)];
+        }
+
+        notification.innerHTML = `
+            <div class="notification-icon">${icon}</div>
+            <div class="notification-content">${message}</div>
+            <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+            <div class="notification-progress"></div>
+        `;
+        
+        console.log('Adding notification to body');
+        document.body.appendChild(notification);
+        
+        // Verify it was added and check styles
+        setTimeout(() => {
+            const added = document.querySelector('.notification');
+            if (added) {
+                const styles = window.getComputedStyle(added);
+                console.log('Notification styles:', {
+                    position: styles.position,
+                    zIndex: styles.zIndex,
+                    top: styles.top,
+                    right: styles.right,
+                    transform: styles.transform,
+                    display: styles.display,
+                    visibility: styles.visibility,
+                    opacity: styles.opacity
+                });
+            } else {
+                console.error('Notification was not added to DOM!');
+            }
+        }, 50);
+        
+        // Add sound effect for success notifications
+        if (type === 'success') {
+            // Create a subtle success sound using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+                oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                // Fallback if audio context is not supported
+                console.log('Audio context not supported');
+            }
+        }
+        
+        // Trigger animation with slight delay for better effect
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                console.log('Adding show class for animation');
+                notification.classList.add('show');
+                
+                // Check animation state
+                setTimeout(() => {
+                    const animatedStyles = window.getComputedStyle(notification);
+                    console.log('Post-animation transform:', animatedStyles.transform);
+                }, 200);
+            }, 10);
+        });
+
+        // Auto-remove with fade out animation
+        setTimeout(() => {
+            if (notification.parentElement) {
+                console.log('Auto-removing notification');
+                notification.style.transform = 'translateX(120%) scale(0.8)';
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentElement) notification.remove();
+                }, 400);
+            }
+        }, duration);
+        
+        // Add click to dismiss functionality
+        notification.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('notification-close')) {
+                notification.style.transform = 'translateX(120%) scale(0.8)';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 200);
+            }
+        });
+        
+        return notification;
+    };
+    
+    // Debug function for testing notifications
+    window.testNotification = function(type = 'success') {
+        const messages = {
+            'success': '🎉 Test Success Notification! Item added successfully!',
+            'error': '❌ Test Error Notification! Something went wrong!',
+            'info': '💡 Test Info Notification! This is just information!'
+        };
+        console.log('Testing notification of type:', type);
+        return window.showNotification(messages[type], type);
+    };
 
     // Splash screen logic
     const splashScreen = document.getElementById('splash-screen');
@@ -119,7 +368,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup discount radio button listeners
         const discountRadios = document.getElementsByName('cash-discount');
         discountRadios.forEach(radio => {
-            radio.addEventListener('change', window.updateDiscountSummary);
+            radio.addEventListener('change', function() {
+                window.updateCartDisplay();
+            });
         });
     }
 
@@ -180,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         window.orderCart.push(item);
         window.updateCartDisplay();
-        window.showNotification(`✓ ${item.itemName} (${item.sizeName}) added to cart!`, 'success');
+        window.showNotification(`<strong>${item.itemName}</strong> (${item.sizeName}) added to your cart!`, 'success');
     };
 
     window.removeFromCart = function(index) {
@@ -263,9 +514,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update Cart Display Section (below delivery option)
         if (cartItemsContainer) {
             let cartDisplayHtml = '';
+            // Get selected discount
+            let discountPercent = 0;
+            const discountRadios = document.getElementsByName('cash-discount');
+            discountRadios.forEach(radio => {
+                if (radio.checked) {
+                    discountPercent = parseFloat(radio.value);
+                }
+            });
             window.orderCart.forEach((item, index) => {
                 const itemPrice = parseFloat(item.price) || 0;
-                const itemTotal = (itemPrice * item.quantity).toFixed(2);
+                const itemTotalRaw = itemPrice * item.quantity;
+                const itemDiscount = itemTotalRaw * (discountPercent / 100);
+                const itemTotal = (itemTotalRaw - itemDiscount).toFixed(2);
                 cartDisplayHtml += `
                     <div class="cart-item-row">
                         <div class="cart-item-name">${item.itemName}${item.instructions ? '<br><small style="color: #999; font-size: 12px;">📝 ' + item.instructions + '</small>' : ''}</div>
@@ -300,24 +561,21 @@ document.addEventListener('DOMContentLoaded', () => {
         window.orderCart.forEach((item) => {
             const itemPrice = parseFloat(item.price) || 0;
             subtotal += itemPrice * item.quantity;
-            console.log(`Item: ${item.itemName}, Price: ${itemPrice}, Qty: ${item.quantity}`);
         });
-        
-        console.log('Cart subtotal:', subtotal);
-        
+
         // Get selected discount
         let discountPercent = 0;
         discountRadios.forEach(radio => {
             if (radio.checked) {
                 discountPercent = parseFloat(radio.value);
-                console.log('Selected discount:', discountPercent + '%');
             }
         });
-        
-        if (discountPercent > 0) {
-            const discountAmount = (subtotal * discountPercent / 100);
-            const totalAfterDiscount = subtotal - discountAmount;
-            
+
+        // Always recalculate for all items in cart
+        const discountAmount = (subtotal * discountPercent / 100);
+        const totalAfterDiscount = subtotal - discountAmount;
+
+        if (subtotal > 0) {
             discountSummary.classList.add('show');
             discountSummary.innerHTML = `
                 <div class="discount-summary-row">
@@ -408,8 +666,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 });
 
+                // Check if this is the first category to make it open by default
+                const isFirstCategory = Object.keys(groupedByCategory).indexOf(categoryName) === 0;
                 const categoryHtml = `
-                    <div class="menu-category">
+                    <div class="menu-category ${isFirstCategory ? 'open' : ''}">
                         <div class="category-header">${categoryName.toUpperCase()}</div>
                         <div class="category-content">
                             <div class="category-filters">${filtersHtml}</div>
@@ -438,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const price = priceObj ? priceObj.price : '0';
 
                     if (quantity < 1) {
-                        window.showNotification('⚠ Please enter a quantity of at least 1', 'error');
+                        window.showNotification('<strong>Oops!</strong><br>Please enter a quantity of at least 1 to add this item', 'error');
                         return;
                     }
 
@@ -647,8 +907,11 @@ document.addEventListener('DOMContentLoaded', () => {
             totalPrice: totalPrice.toFixed(2),
             items: window.orderCart || []
         };
+        
+        console.log('Order data being sent to backend:', orderData);
+        
         if (orderData.items.length === 0) {
-            window.showNotification('⚠ Please add items to your cart before saving the order', 'error');
+            window.showNotification('<strong>Cart is Empty!</strong><br>Please add some delicious items to your cart before placing the order', 'error', 3500);
             submitButton.disabled = false;
             submitButton.textContent = 'Save Order';
             return;
@@ -661,7 +924,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Error creating order.');
-            window.showNotification(`✓ Order successfully created! Order ID: ${result.orderId}`, 'success');
+            console.log('Backend response after creating order:', result);
+            window.showNotification(`<strong>🎉 Order Created Successfully!</strong><br>Your Order ID: <strong>${result.orderId}</strong><br>We'll prepare your delicious meal!`, 'success', 5000);
             newOrderForm.reset();
             window.orderCart = [];
             window.updateCartDisplay();
@@ -689,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         if (pricing.length === 0) {
-            window.showNotification('⚠ You must add at least one size and price', 'error');
+            window.showNotification('<strong>Missing Pricing!</strong><br>Please add at least one size and price for this menu item', 'error');
             submitButton.disabled = false;
             submitButton.textContent = 'Save New Item';
             return;
@@ -707,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Failed to create item.');
-            window.showNotification(`✓ Menu item "${result.itemName}" created successfully!`, 'success');
+            window.showNotification(`<strong>🍽️ Menu Item Added!</strong><br>"<strong>${result.itemName}</strong>" is now available<br>Your customers will love it!`, 'success', 4000);
             newMenuItemForm.reset();
             const pricingContainer = document.getElementById('pricing-container');
             while (pricingContainer.children.length > 1) {
@@ -798,6 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/order/${orderId}`);
             if (!response.ok) throw new Error('Failed to fetch order details.');
             const items = await response.json();
+            console.log('Raw order details response:', items);
             displayOrderDetails(items);
         } catch (error) {
             console.error('Error fetching details:', error);
@@ -809,10 +1074,57 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('order-details-container');
         const orderInfo = items.find(item => item.SK.startsWith('ORDER#'));
         const menuItems = items.filter(item => item.SK.startsWith('ITEM#'));
+        
+        console.log('Order info found:', orderInfo);
+        console.log('Menu items found:', menuItems);
+        
         if (!orderInfo) {
             container.innerHTML = '<p style="color: red;">Order data is incomplete.</p>';
             return;
         }
+
+        // Calculate fallback discount if missing
+        let subtotal = orderInfo.subtotal !== undefined ? Number(orderInfo.subtotal) : null;
+        let discountPercent = orderInfo.discountPercent !== undefined ? Number(orderInfo.discountPercent) : null;
+        let discountAmount = orderInfo.discountAmount !== undefined ? Number(orderInfo.discountAmount) : null;
+        let totalPrice = orderInfo.totalPrice !== undefined ? Number(orderInfo.totalPrice) : null;
+
+        // Debug logging
+        console.log('Original orderInfo discount data:', {
+            subtotal: orderInfo.subtotal,
+            discountPercent: orderInfo.discountPercent,
+            discountAmount: orderInfo.discountAmount,
+            totalPrice: orderInfo.totalPrice
+        });
+
+        // If discount info is missing, try to recalculate from items
+        if ((discountPercent === null || isNaN(discountPercent))) {
+            // Use orderInfo.items if present, else use menuItems
+            let itemsArr = Array.isArray(orderInfo.items) && orderInfo.items.length > 0 ? orderInfo.items : menuItems;
+            console.log('Using items array for calculation:', itemsArr);
+            if (itemsArr.length > 0) {
+                subtotal = itemsArr.reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (item.quantity || 1)), 0);
+                totalPrice = Number(orderInfo.totalPrice);
+                console.log('Calculated subtotal:', subtotal, 'Total price:', totalPrice);
+                // If subtotal > total, discount was applied
+                if (subtotal > totalPrice) {
+                    discountAmount = subtotal - totalPrice;
+                    discountPercent = Math.round((discountAmount / subtotal) * 100);
+                    console.log('Discount detected - Amount:', discountAmount, 'Percent:', discountPercent);
+                } else {
+                    discountAmount = 0;
+                    discountPercent = 0;
+                    console.log('No discount detected');
+                }
+            }
+        }
+
+        // If subtotal is still missing, fallback to totalPrice
+        if (subtotal === null || isNaN(subtotal)) subtotal = totalPrice;
+        if (discountAmount === null || isNaN(discountAmount)) discountAmount = 0;
+        if (discountPercent === null || isNaN(discountPercent)) discountPercent = 0;
+
+        console.log('Final discount values:', { subtotal, discountPercent, discountAmount, totalPrice });
 
         // Build items list - group by item name
         let itemsHtml = '';
@@ -865,9 +1177,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const detailsHtml = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
-                <h2 style="margin: 0;">Order #${orderInfo.orderId}</h2>
-                <div style="font-size: 32px; font-weight: bold; color: #28a745;">$${Number(orderInfo.totalPrice).toFixed(2)}</div>
+            <div class="order-details-pricing-block">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
+                    <h2 style="margin: 0;">Order #${orderInfo.orderId}</h2>
+                    <div class="order-details-price" style="font-size: 32px; font-weight: bold; color: #28a745;">$${totalPrice.toFixed(2)}</div>
+                </div>
+
+                <!-- PRICE SECTION -->
+                <div class="order-details-pricing" style="background: #fffbf0; padding: 15px; border-radius: 8px; border-left: 4px solid #f09819; margin-bottom: 25px;">
+                    <h3 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 12px;">💰 Pricing</h3>
+                    ${(() => {
+                        // Show discount details if discount is detected OR if calculated subtotal > total price
+                        const calculatedSubtotal = menuItems.reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (item.quantity || 1)), 0);
+                        const shouldShowDiscount = (discountPercent > 0 && subtotal > 0) || (calculatedSubtotal > totalPrice && calculatedSubtotal > 0);
+                        console.log('Pricing section condition check:', 'discountPercent:', discountPercent, 'subtotal:', subtotal, 'calculatedSubtotal:', calculatedSubtotal, 'totalPrice:', totalPrice, 'shouldShowDiscount:', shouldShowDiscount);
+                        return shouldShowDiscount;
+                    })() ? `
+                        <p class="order-details-total" style="margin: 8px 0;"><strong>Subtotal:</strong> <span style="font-size: 18px; color: #666;">$${subtotal.toFixed(2)}</span></p>
+                        <p class="order-details-cashdiscount" style="margin: 8px 0;"><strong>Cash Discount (${discountPercent}%):</strong> <span style="font-size: 18px; color: #ff6a3d; font-weight: 600;">-$${discountAmount.toFixed(2)}</span></p>
+                        <p class="order-details-total" style="margin: 8px 0; padding-top: 10px; border-top: 2px dashed #ddd;"><strong>Total Amount:</strong> <span style="font-size: 24px; color: #28a745; font-weight: bold;">$${totalPrice.toFixed(2)}</span></p>
+                    ` : `
+                        <p class="order-details-total" style="margin: 8px 0;"><strong>Total Amount:</strong> <span style="font-size: 24px; color: #28a745; font-weight: bold;">$${totalPrice.toFixed(2)}</span></p>
+                    `}
+                </div>
             </div>
 
             <!-- CUSTOMER DETAILS SECTION -->
@@ -888,18 +1220,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p style="margin: 8px 0;"><strong>Type:</strong> ${orderInfo.deliveryType || 'Pickup'}</p>
                     ${orderInfo.deliveryType === 'Delivery' && orderInfo.deliveryAddress ? `<p style="margin: 8px 0;"><strong>Address:</strong><br><span style="font-size: 14px; color: #555;">${orderInfo.deliveryAddress}</span></p>` : ''}
                 </div>
-            </div>
-
-            <!-- PRICE SECTION -->
-            <div style="background: #fffbf0; padding: 15px; border-radius: 8px; border-left: 4px solid #f09819; margin-bottom: 25px;">
-                <h3 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 12px;">💰 Pricing</h3>
-                ${orderInfo.discountPercent && orderInfo.discountPercent > 0 ? `
-                    <p style="margin: 8px 0;"><strong>Subtotal:</strong> <span style="font-size: 18px; color: #666;">$${Number(orderInfo.subtotal).toFixed(2)}</span></p>
-                    <p style="margin: 8px 0;"><strong>Cash Discount (${orderInfo.discountPercent}%):</strong> <span style="font-size: 18px; color: #ff6a3d; font-weight: 600;">-$${Number(orderInfo.discountAmount).toFixed(2)}</span></p>
-                    <p style="margin: 8px 0; padding-top: 10px; border-top: 2px dashed #ddd;"><strong>Total Amount:</strong> <span style="font-size: 24px; color: #28a745; font-weight: bold;">$${Number(orderInfo.totalPrice).toFixed(2)}</span></p>
-                ` : `
-                    <p style="margin: 8px 0;"><strong>Total Amount:</strong> <span style="font-size: 24px; color: #28a745; font-weight: bold;">$${Number(orderInfo.totalPrice).toFixed(2)}</span></p>
-                `}
             </div>
 
             <!-- ITEMS SECTION -->

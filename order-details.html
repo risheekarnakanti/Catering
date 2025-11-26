@@ -18,8 +18,12 @@
     </header>
 
     <main class="container">
-        <!-- This ID needs to be exactly correct for the JavaScript to find it -->
-        <button id="print-order-btn" class="btn-secondary" style="float:right; margin-bottom: 16px;">🖨️ Print</button>
+        <!-- Print Buttons -->
+        <div style="float:right; margin-bottom: 16px; display: flex; gap: 10px;">
+            <button id="print-frontdesk-btn" class="btn-secondary">🖨️ Front Desk Print</button>
+            <button id="print-customer-btn" class="btn-secondary">🖨️ Customer Print</button>
+            <button id="print-kitchen-btn" class="btn-secondary">🖨️ Kitchen Print</button>
+        </div>
         <div id="order-details-container" class="form-container">
             <!-- Order details will be rendered here by JS, including delivery type and address -->
             <h2>Order Details</h2>
@@ -28,21 +32,53 @@
     </main>
     
     <script src="js/app.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var printBtn = document.getElementById('print-order-btn');
-        if (printBtn) {
-            printBtn.addEventListener('click', function() {
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function handlePrint(mode) {
+                document.body.classList.add('print-' + mode);
                 window.print();
-            });
-        }
-    });
-    </script>
+                setTimeout(function() {
+                    document.body.classList.remove('print-' + mode);
+                }, 1000);
+            }
+            var frontdeskBtn = document.getElementById('print-frontdesk-btn');
+            var customerBtn = document.getElementById('print-customer-btn');
+            var kitchenBtn = document.getElementById('print-kitchen-btn');
+            if (frontdeskBtn) {
+                frontdeskBtn.addEventListener('click', function() {
+                    handlePrint('frontdesk');
+                });
+            }
+            if (customerBtn) {
+                customerBtn.addEventListener('click', function() {
+                    handlePrint('customer');
+                });
+            }
+            if (kitchenBtn) {
+                kitchenBtn.addEventListener('click', function() {
+                    handlePrint('kitchen');
+                });
+            }
+        });
+        </script>
     <style>
     @media print {
-        #print-order-btn { display: none !important; }
+        #print-frontdesk-btn, #print-customer-btn, #print-kitchen-btn { display: none !important; }
         .app-header, nav, .btn-secondary { display: none !important; }
         body, .container, .form-container { box-shadow: none !important; background: #fff !important; }
+        /* Hide price section for kitchen print */
+        body.print-kitchen .order-details-container .order-details-price,
+        body.print-kitchen .order-details-container .order-details-total,
+        body.print-kitchen .order-details-container .order-details-cashdiscount,
+        body.print-kitchen .order-details-container .order-details-pricing,
+        body.print-kitchen .order-details-container [style*="color: #28a745"],
+        body.print-kitchen .order-details-container [style*="color: #ff6a3d"],
+        body.print-kitchen .order-details-container [style*="color: #f09819"],
+        body.print-kitchen .order-details-container [style*="font-size: 24px"],
+        body.print-kitchen .order-details-container [style*="font-size: 18px"],
+        body.print-kitchen .order-details-container [style*="font-size: 32px"] {
+            display: none !important;
+        }
     }
     </style>
 

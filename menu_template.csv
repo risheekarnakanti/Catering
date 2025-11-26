@@ -1,0 +1,50 @@
+PK,SK,itemName,description,itemCategory,itemType,isAvailable,sizeName_1,price_1,sizeName_2,price_2,sizeName_3,price_3,sizeName_4,price_4
+MENU,ITEM#afghani-naan,Afghani Naan,"A fluffy, leavened bread often topped with seeds.",Breads,Bread,TRUE,Per Piece,4.5,,,,,
+MENU,ITEM#aloo-bonda,Aloo Bonda,Spiced mashed potato balls battered in chickpea flour and deep-fried.,Appetizer,Others,TRUE,Shallow Tray,30,Medium Tray,40,Half Tray,55,Full Tray,75
+MENU,ITEM#aloo-kulcha,Aloo Kulcha,Soft leavened bread stuffed with spiced potatoes.,Breads,Bread,TRUE,Per Piece,3.5,,,,,
+MENU,ITEM#avakaya-paneer-biryani,Avakaya Paneer Biryani,"A spicy and tangy biryani with paneer, flavored with mango pickle.",Biryani & Pulav,Biryani,TRUE,Shallow Tray,1500,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#avakaya-paneer-pulav,Avakaya Paneer Pulav,"A spicy and tangy pulav with paneer, flavored with mango pickle.",Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#avakaya-veg-biryani,Avakaya Veg Biryani,A spicy and tangy biryani flavored with Andhra's famous mango pickle.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#avakaya-veg-pulav,Avakaya Veg Pulav,A spicy and tangy pulav flavored with Andhra's famous mango pickle.,Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#baby-corn-65,Baby Corn 65,"Crispy baby corn fried and tossed in a tangy, spicy red sauce with curry leaves.",Appetizer,65,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#baby-corn-capsicum-fried-rice,Baby Corn Capsicum Fried Rice,Fried rice with baby corn and bell peppers.,Indo Chinese,Fried Rice,TRUE,Shallow Tray,45,Medium Tray,60,Half Tray,85,Full Tray,110
+MENU,ITEM#baby-corn-manchurian,Baby Corn Manchurian,"Golden-fried baby corn tossed in a classic, savory Manchurian sauce.",Appetizer,Manchurian,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#baby-corn-masala,Baby Corn Masala,Tender baby corn in a rich and creamy tomato-onion gravy.,Entree,Curry,TRUE,Shallow Tray,50,Medium Tray,65,Half Tray,90,Full Tray,120
+MENU,ITEM#baby-corn-pepper-fry,Baby Corn Pepper Fry,"Tender baby corn sautéed with fresh black pepper, onions, and bell peppers.",Appetizer,Pepper,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#bendakaya-vepudu-with-nuts,Bendakaya Vepudu with Nuts (Dry),Stir-fried okra (bhindi) with a crunchy peanut and spice mix.,Entree,Curry,TRUE,Shallow Tray,50,Medium Tray,65,Half Tray,90,Full Tray,120
+MENU,ITEM#bread-basket,Bread Basket (Plain/Garlic/Butter/Bullet),An assortment of our popular naans.,Breads,Bread,TRUE,5 Piece Basket,15,,,,,
+MENU,ITEM#brownie-vanilla-ice-cream,Brownie + Vanilla Ice Cream,"A warm, fudgy brownie served with a scoop of classic vanilla ice cream.",Dessert,Sweet,TRUE,Per Serving,8,,,,,
+MENU,ITEM#bullet-naan,Bullet Naan,Spicy naan topped with chopped green chillies.,Breads,Bread,TRUE,Per Piece,4,,,,,
+MENU,ITEM#butter-naan,Butter Naan,"Soft, leavened flatbread brushed with butter.",Breads,Bread,TRUE,Per Piece,3,,,,,
+MENU,ITEM#chana-masala,Chana Masala,Chickpeas cooked in a spiced onion and tomato gravy.,Entree,Curry,TRUE,Shallow Tray,45,Medium Tray,60,Half Tray,85,Full Tray,110
+MENU,ITEM#chana-palak,Chana Palak,A wholesome curry with chickpeas and spinach in a spiced gravy.,Entree,Curry,TRUE,Shallow Tray,50,Medium Tray,65,Half Tray,90,Full Tray,120
+MENU,ITEM#chilli-baby-corn,Chilli Baby Corn,Golden-fried baby corn tossed in a spicy and tangy chilli-garlic sauce with onions and peppers.,Appetizer,Chilli,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#chilli-garlic-fried-rice,Chilli Garlic Fried Rice,Fried rice with a predominant flavor of spicy chilli and garlic.,Indo Chinese,Fried Rice,TRUE,Shallow Tray,45,Medium Tray,60,Half Tray,85,Full Tray,110
+MENU,ITEM#chilli-garlic-noodles,Chilli Garlic Noodles,Noodles with a predominant flavor of spicy chilli and garlic.,Indo Chinese,Noodles,TRUE,Shallow Tray,45,Medium Tray,60,Half Tray,85,Full Tray,110
+MENU,ITEM#chilli-gobi,Chilli Gobi,Crispy cauliflower tossed in a spicy and tangy chilli-garlic sauce.,Appetizer,Chilli,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#chilli-paneer,Chilli Paneer,Classic Indo-Chinese dish of paneer cubes tossed in a spicy chilli-garlic sauce.,Appetizer,Chilli,TRUE,Shallow Tray,45,Medium Tray,55,Half Tray,75,Full Tray,95
+MENU,ITEM#chilli-veg,Chilli Veg,Mixed vegetable bites tossed in a spicy and tangy chilli-garlic sauce.,Appetizer,Chilli,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#crispy-corn,Crispy Corn,"Sweet corn kernels, lightly battered and fried until crispy, tossed with spices.",Appetizer,Others,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#cut-mirchi,Cut Mirchi,"Spiced green chilli fritters, cut and double-fried for extra crispiness.",Appetizer,Others,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#dal-tadka,Dal Tadka,"Yellow lentils tempered with ghee, spices, and herbs.",Entree,Curry,TRUE,Shallow Tray,40,Medium Tray,55,Half Tray,80,Full Tray,105
+MENU,ITEM#dondakaya-vepudu-with-nuts,Dondakaya Vepudu with Nuts (Dry),Stir-fried ivy gourd with a crunchy peanut and spice mix.,Entree,Curry,TRUE,Shallow Tray,50,Medium Tray,65,Half Tray,90,Full Tray,120
+MENU,ITEM#garlic-naan,Garlic Naan,Soft flatbread topped with garlic and herbs.,Breads,Bread,TRUE,Per Piece,3.5,,,,,
+MENU,ITEM#gobi-65,Gobi 65,Crispy cauliflower florets tossed in a famous spicy and tangy red sauce.,Appetizer,65,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#gobi-manchurian,Gobi Manchurian,"Fried cauliflower florets in a flavorful, savory Manchurian sauce.",Appetizer,Manchurian,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#gobi-pepper-fry,Gobi Pepper Fry,"Cauliflower florets sautéed with cracked black pepper, onions, and bell peppers.",Appetizer,Pepper,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
+MENU,ITEM#gongura-dal,Gongura Dal,A tangy lentil curry made with sour gongura (roselle) leaves.,Entree,Curry,TRUE,Shallow Tray,45,Medium Tray,60,Half Tray,85,Full Tray,110
+MENU,ITEM#gongura-paneer-biryani,Gongura Paneer Biryani,A tangy biryani made with paneer and gongura (roselle) leaves.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#gongura-paneer-pulav,Gongura Paneer Pulav,A tangy pulav made with paneer and gongura (roselle) leaves.,Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#gongura-veg-biryani,Gongura Veg Biryani,A tangy biryani made with vegetables and gongura (roselle) leaves.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#gongura-veg-pulav,Gongura Veg Pulav,A tangy pulav made with vegetables and gongura (roselle) leaves.,Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#gulab-jamun,Gulab Jamun,"Soft, berry-sized milk solid balls soaked in a rose-flavored sugar syrup.",Dessert,Sweet,TRUE,Shallow Tray,40,Medium Tray,55,Half Tray,75,Full Tray,100
+MENU,ITEM#gutti-vankaya-biryani,Gutti Vankaya Biryani,Biryani layered with flavorful stuffed eggplants.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#gutti-vankaya-curry,Gutti Vankaya Curry,"Stuffed eggplant curry, a specialty from Andhra cuisine.",Entree,Curry,TRUE,Shallow Tray,55,Medium Tray,70,Half Tray,95,Full Tray,130
+MENU,ITEM#gutti-vankaya-pulav,Gutti Vankaya Pulav,Pulav cooked with flavorful stuffed eggplants.,Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#ice-cream,Ice Cream,"Classic ice cream, available in various flavors.",Dessert,Sweet,TRUE,Per Scoop,3,,,,,
+MENU,ITEM#jackfruit-biryani,Jackfruit Biryani,"Biryani made with raw jackfruit, which has a texture similar to meat.",Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#jackfruit-pulav,Jackfruit Pulav,"Pulav made with raw jackfruit, which has a texture similar to meat.",Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#kadai-paneer,Kadai Paneer,Paneer cooked in a traditional kadai with bell peppers and ground spices.,Entree,Curry,TRUE,Shallow Tray,55,Medium Tray,70,Half Tray,95,Full Tray,130
+MENU,ITEM#kaju-mushroom,Kaju Mushroom,"Cashews and mushrooms in a creamy, rich, and mildly sweet gravy.",Entree,Curry,TRUE,Shallow Tray,55,Medium Tray,70,Half Tray,95,Full Tray,130
+MENU,ITEM#kaju-paneer,Kaju Paneer,A rich curry made with cashews and paneer in a creamy sauce.,Entree,Curry,TRUE,Shallow Tray,55,Medium Tray,70,Half Tray,95,Full Tray,130
+MENU,ITEM#kaju-paneer-biryani,Kaju Paneer Biryani,A rich biryani with cashews and paneer.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,2000
