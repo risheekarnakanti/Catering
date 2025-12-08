@@ -2,10 +2,10 @@ PK,SK,itemName,description,itemCategory,itemType,isAvailable,sizeName_1,price_1,
 MENU,ITEM#afghani-naan,Afghani Naan,"A fluffy, leavened bread often topped with seeds.",Breads,Bread,TRUE,Per Piece,4.5,,,,,
 MENU,ITEM#aloo-bonda,Aloo Bonda,Spiced mashed potato balls battered in chickpea flour and deep-fried.,Appetizer,Others,TRUE,Shallow Tray,30,Medium Tray,40,Half Tray,55,Full Tray,75
 MENU,ITEM#aloo-kulcha,Aloo Kulcha,Soft leavened bread stuffed with spiced potatoes.,Breads,Bread,TRUE,Per Piece,3.5,,,,,
-MENU,ITEM#avakaya-paneer-biryani,Avakaya Paneer Biryani,"A spicy and tangy biryani with paneer, flavored with mango pickle.",Biryani & Pulav,Biryani,TRUE,Shallow Tray,1500,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#avakaya-paneer-biryani,Avakaya Paneer Biryani,"A spicy and tangy biryani with paneer, flavored with mango pickle.",Biryani & Pulav,Biryani,TRUE,Shallow Tray,1495,Medium Tray,75,Half Tray,100,Full Tray,140
 MENU,ITEM#avakaya-paneer-pulav,Avakaya Paneer Pulav,"A spicy and tangy pulav with paneer, flavored with mango pickle.",Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
 MENU,ITEM#avakaya-veg-biryani,Avakaya Veg Biryani,A spicy and tangy biryani flavored with Andhra's famous mango pickle.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
-MENU,ITEM#avakaya-veg-pulav,Avakaya Veg Pulav,A spicy and tangy pulav flavored with Andhra's famous mango pickle.,Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
+MENU,ITEM#avakaya-veg-pulav,Avakaya Veg Pulav,A spicy and tangy pulav flavored with Andhra's famous mango pickle.,Biryani & Pulav,Pulav,TRUE,Shallow Tray,600,Medium Tray,75,Half Tray,100,Full Tray,140
 MENU,ITEM#baby-corn-65,Baby Corn 65,"Crispy baby corn fried and tossed in a tangy, spicy red sauce with curry leaves.",Appetizer,65,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
 MENU,ITEM#baby-corn-capsicum-fried-rice,Baby Corn Capsicum Fried Rice,Fried rice with baby corn and bell peppers.,Indo Chinese,Fried Rice,TRUE,Shallow Tray,45,Medium Tray,60,Half Tray,85,Full Tray,110
 MENU,ITEM#baby-corn-manchurian,Baby Corn Manchurian,"Golden-fried baby corn tossed in a classic, savory Manchurian sauce.",Appetizer,Manchurian,TRUE,Shallow Tray,35,Medium Tray,45,Half Tray,60,Full Tray,80
@@ -48,3 +48,7 @@ MENU,ITEM#kadai-paneer,Kadai Paneer,Paneer cooked in a traditional kadai with be
 MENU,ITEM#kaju-mushroom,Kaju Mushroom,"Cashews and mushrooms in a creamy, rich, and mildly sweet gravy.",Entree,Curry,TRUE,Shallow Tray,55,Medium Tray,70,Half Tray,95,Full Tray,130
 MENU,ITEM#kaju-paneer,Kaju Paneer,A rich curry made with cashews and paneer in a creamy sauce.,Entree,Curry,TRUE,Shallow Tray,55,Medium Tray,70,Half Tray,95,Full Tray,130
 MENU,ITEM#kaju-paneer-biryani,Kaju Paneer Biryani,A rich biryani with cashews and paneer.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,2000
+
+
+
+
