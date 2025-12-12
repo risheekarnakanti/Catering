@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Realistic Animated Forest Background -->
+    <div class="forest-layer"></div>
+    <div class="forest-leaves"></div>
+    <div class="sunlight-rays"></div>
+    <div class="wind-effect"></div>
 
     <header class="app-header">
         <h1>CateringApp</h1>
@@ -19,11 +24,12 @@
 
     <main class="container">
         <!-- Print Buttons -->
-        <div style="float:right; margin-bottom: 16px; display: flex; gap: 10px;">
+        <div class="print-buttons-container" style="float:right; margin-bottom: 16px; display: flex; gap: 10px;">
             <button id="print-frontdesk-btn" class="btn-secondary">🖨️ Front Desk Receipt</button>
             <button id="print-customer-btn" class="btn-secondary">🖨️ Customer Receipt</button>
             <button id="print-kitchen-btn" class="btn-secondary">🖨️ Kitchen Receipt</button>
         </div>
+        <div style="clear: both;"></div>
         <div id="order-details-container" class="form-container">
             <!-- Order details will be rendered here by JS, including delivery type and address -->
             <h2>Order Details</h2>
@@ -50,7 +56,11 @@
                 
                 // Header - Different for each receipt type
                 receipt += ESC + '!' + '\x18'; // Double height & width
-                receipt += (orderData.receiptType || 'CATERING RECEIPT') + LF;
+                if (orderData.receiptType === 'KITCHEN ORDER') {
+                    receipt += 'KITCHEN ORDER' + LF;
+                } else {
+                    receipt += (orderData.receiptType || 'CATERING RECEIPT') + LF;
+                }
                 receipt += ESC + '!' + '\x00'; // Normal size
                 receipt += '================================' + LF;
                 
@@ -136,19 +146,21 @@
                 
                 receipt += '--------------------------------' + LF;
                 
-                // Pricing (show/hide based on receipt type)
-                if (orderData.showPricing !== false) {
+                // Pricing (hide completely for kitchen receipts)
+                if (orderData.showPricing !== false && orderData.receiptType !== 'KITCHEN ORDER' && orderData.totalPrice) {
                     receipt += ESC + 'a' + '\x02'; // Right alignment
-                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice) {
+                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice && orderData.subtotal !== '') {
                         receipt += 'Subtotal: $' + orderData.subtotal + LF;
                     }
-                    if (orderData.discountPercent > 0) {
+                    if (orderData.discountPercent > 0 && orderData.discountAmount) {
                         receipt += 'Discount (' + orderData.discountPercent + '%): -$' + orderData.discountAmount + LF;
                     }
                     receipt += ESC + '!' + '\x18'; // Double size
                     receipt += 'TOTAL: $' + orderData.totalPrice + LF;
                     receipt += ESC + '!' + '\x00'; // Normal size
                     receipt += '--------------------------------' + LF;
+                } else if (orderData.receiptType === 'KITCHEN ORDER') {
+                    console.log('Kitchen receipt: No pricing information included');
                 }
                 
                 // Special instructions (show for all receipt types)
@@ -382,8 +394,12 @@
             function generateThermalHTML(orderData) {
                 let html = '';
                 
-                // Header
-                html += `<div class="header">${orderData.receiptType || 'CATERING RECEIPT'}</div>`;
+                // Header - Different for each receipt type
+                if (orderData.receiptType === 'KITCHEN ORDER') {
+                    html += '<div class="header">KITCHEN ORDER</div>';
+                } else {
+                    html += `<div class="header">${orderData.receiptType || 'CATERING RECEIPT'}</div>`;
+                }
                 html += '<div class="separator">================================</div>';
                 
                 // Order info
@@ -460,16 +476,18 @@
                 
                 html += '<div class="separator">--------------------------------</div>';
                 
-                // Pricing (show/hide based on receipt type)
-                if (orderData.showPricing !== false) {
-                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice) {
+                // Pricing (hide completely for kitchen receipts)
+                if (orderData.showPricing !== false && orderData.receiptType !== 'KITCHEN ORDER' && orderData.totalPrice) {
+                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice && orderData.subtotal !== '') {
                         html += `<div class="right-align">Subtotal: $${orderData.subtotal}</div>`;
                     }
-                    if (orderData.discountPercent > 0) {
+                    if (orderData.discountPercent > 0 && orderData.discountAmount) {
                         html += `<div class="right-align">Discount (${orderData.discountPercent}%): -$${orderData.discountAmount}</div>`;
                     }
                     html += `<div class="total">TOTAL: $${orderData.totalPrice}</div>`;
                     html += '<div class="separator">--------------------------------</div>';
+                } else if (orderData.receiptType === 'KITCHEN ORDER') {
+                    console.log('Browser print - Kitchen receipt: No pricing information included');
                 }
                 
                 // Special instructions
@@ -510,13 +528,23 @@
             }
 
             function handlePrint(mode) {
+                console.log('=== HANDLE PRINT CALLED ===');
+                console.log('Print mode:', mode);
+                
                 // Get current order data from the page
                 const orderData = extractOrderDataFromPage();
+                console.log('Initial orderData:', orderData);
                 
                 // Customize receipt content based on print type
                 if (mode === 'kitchen') {
                     orderData.showPricing = false; // Hide pricing for kitchen
                     orderData.receiptType = 'KITCHEN ORDER';
+                    // Completely remove pricing data for kitchen receipts
+                    orderData.totalPrice = '';
+                    orderData.subtotal = '';
+                    orderData.discountAmount = '';
+                    orderData.discountPercent = 0;
+                    console.log('Kitchen receipt mode: pricing disabled and data removed');
                 } else if (mode === 'customer') {
                     orderData.showPricing = true;
                     orderData.receiptType = 'CUSTOMER RECEIPT';
@@ -527,6 +555,10 @@
                     orderData.showPricing = true;
                     orderData.receiptType = 'CATERING RECEIPT';
                 }
+                
+                console.log('Final orderData after mode customization:', orderData);
+                console.log('Receipt type set to:', orderData.receiptType);
+                console.log('Show pricing set to:', orderData.showPricing);
                 
                 // All receipts now use thermal format
                 const receiptData = generateThermalReceipt(orderData);
@@ -763,6 +795,7 @@
             }
             if (kitchenBtn) {
                 kitchenBtn.addEventListener('click', function() {
+                    console.log('Kitchen button clicked - calling handlePrint with kitchen mode');
                     handlePrint('kitchen');
                 });
             }
