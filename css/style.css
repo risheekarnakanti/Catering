@@ -427,6 +427,13 @@ textarea {
 .menu-category.open .category-header::after { transform: rotate(180deg); }
 .category-content { padding: 20px; display: none; }
 .menu-category.open .category-content { display: block; }
+
+/* Add spacing between category header and first menu item */
+.category-content .menu-items-list .menu-item-with-options:first-child {
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
 .category-filters {
     display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px;
     padding-bottom: 15px; border-bottom: 1px solid var(--border-color);
@@ -437,7 +444,22 @@ textarea {
 }
 .filter-btn.active { background-color: #f09819; color: white; font-weight: bold; }
 #new-order-form #menu-items-container-fieldset { padding: 0; border: none; }
-.menu-items-list { display: flex; flex-direction: column; gap: 15px; }
+
+/* Enhanced styling for menu items fieldset */
+#menu-items-fieldset {
+    margin-bottom: 30px !important; /* Extra space under menu items */
+    padding: 25px !important;
+    border: 2px solid #ffe0cc !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #fff9f5 100%) !important;
+    box-shadow: 0 2px 8px rgba(255, 154, 86, 0.1) !important;
+}
+
+/* Add padding inside menu items container */
+#menu-items-container {
+    padding: 10px 0;
+}
+.menu-items-list { display: flex; flex-direction: column; gap: 20px; }
 .menu-item-with-options {
     display: grid; grid-template-columns: 2.5fr 1.5fr 1fr 0.7fr;
     gap: 10px; align-items: center; border-bottom: 1px solid var(--light-grey);

@@ -1,7 +1,7 @@
 PK,SK,itemName,description,itemCategory,itemType,isAvailable,sizeName_1,price_1,sizeName_2,price_2,sizeName_3,price_3,sizeName_4,price_4
 MENU,ITEM#afghani-naan,Afghani Naan,"A fluffy, leavened bread often topped with seeds.",Breads,Bread,TRUE,Per Piece,4.5,,,,,
 MENU,ITEM#aloo-bonda,Aloo Bonda,Spiced mashed potato balls battered in chickpea flour and deep-fried.,Appetizer,Others,TRUE,Shallow Tray,30,Medium Tray,40,Half Tray,55,Full Tray,75
-MENU,ITEM#aloo-kulcha,Aloo Kulcha,Soft leavened bread stuffed with spiced potatoes.,Breads,Bread,TRUE,Per Piece,3.5,,,,,
+MENU,ITEM#aloo-kulcha,Aloo Kulcha,Soft leavened bread stuffed with spiced potatoes.,Breads,Bread,TRUE,Per Piece,10,,,,,
 MENU,ITEM#avakaya-paneer-biryani,Avakaya Paneer Biryani,"A spicy and tangy biryani with paneer, flavored with mango pickle.",Biryani & Pulav,Biryani,TRUE,Shallow Tray,1495,Medium Tray,75,Half Tray,100,Full Tray,140
 MENU,ITEM#avakaya-paneer-pulav,Avakaya Paneer Pulav,"A spicy and tangy pulav with paneer, flavored with mango pickle.",Biryani & Pulav,Pulav,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140
 MENU,ITEM#avakaya-veg-biryani,Avakaya Veg Biryani,A spicy and tangy biryani flavored with Andhra's famous mango pickle.,Biryani & Pulav,Biryani,TRUE,Shallow Tray,60,Medium Tray,75,Half Tray,100,Full Tray,140

@@ -16,7 +16,7 @@
         <nav>
             <a href="index.html" class="active">Take Order</a>
             <a href="orders.html">View Orders</a>
-            <a href="admin.html">Admin</a>
+            <!-- <a href="admin.html">Admin</a> -->
         </nav>
     </header>
     <main class="container">
@@ -49,11 +49,8 @@
                         <input type="time" id="delivery-time" name="delivery-time" required>
                     </div>
                 </fieldset>
-                <fieldset>
-                    <legend class="legend-with-action">
-                        <span>Menu Items</span>
-                        <a href="admin.html" class="btn-add-item">+ Add New Item</a>
-                    </legend>
+                <fieldset id="menu-items-fieldset">
+                    <legend>Menu Items</legend>
                     <div id="menu-items-container">
                         <p>Loading menu...</p>
                     </div>

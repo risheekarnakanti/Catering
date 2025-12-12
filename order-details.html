@@ -13,16 +13,16 @@
         <nav>
             <a href="index.html">Take Order</a>
             <a href="orders.html">View Orders</a>
-            <a href="admin.html">Admin</a>
+            <!-- <a href="admin.html">Admin</a> -->
         </nav>
     </header>
 
     <main class="container">
         <!-- Print Buttons -->
         <div style="float:right; margin-bottom: 16px; display: flex; gap: 10px;">
-            <button id="print-frontdesk-btn" class="btn-secondary">🖨️ Front Desk Print</button>
-            <button id="print-customer-btn" class="btn-secondary">🖨️ Customer Print</button>
-            <button id="print-kitchen-btn" class="btn-secondary">🖨️ Kitchen Print</button>
+            <button id="print-frontdesk-btn" class="btn-secondary">🖨️ Front Desk Receipt</button>
+            <button id="print-customer-btn" class="btn-secondary">🖨️ Customer Receipt</button>
+            <button id="print-kitchen-btn" class="btn-secondary">🖨️ Kitchen Receipt</button>
         </div>
         <div id="order-details-container" class="form-container">
             <!-- Order details will be rendered here by JS, including delivery type and address -->
@@ -32,18 +32,725 @@
     </main>
     
     <script src="js/app.js"></script>
-        <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            function handlePrint(mode) {
-                document.body.classList.add('print-' + mode);
-                window.print();
-                setTimeout(function() {
-                    document.body.classList.remove('print-' + mode);
-                }, 1000);
+            // Enhanced thermal printer support with ESC/POS commands
+            function generateThermalReceipt(orderData) {
+                // ESC/POS commands for thermal printers
+                const ESC = '\x1B';
+                const GS = '\x1D';
+                const LF = '\x0A';
+                const CR = '\x0D';
+                
+                let receipt = '';
+                
+                // Initialize printer
+                receipt += ESC + '@'; // Initialize printer
+                receipt += ESC + 'a' + '\x01'; // Center alignment
+                
+                // Header - Different for each receipt type
+                receipt += ESC + '!' + '\x18'; // Double height & width
+                receipt += (orderData.receiptType || 'CATERING RECEIPT') + LF;
+                receipt += ESC + '!' + '\x00'; // Normal size
+                receipt += '================================' + LF;
+                
+                // Order info
+                receipt += ESC + 'a' + '\x00'; // Left alignment
+                receipt += 'Order #: ' + orderData.orderId + LF;
+                receipt += 'Date: ' + new Date().toLocaleDateString() + LF;
+                receipt += 'Time: ' + new Date().toLocaleTimeString() + LF;
+                receipt += '--------------------------------' + LF;
+                
+                // Customer info (always show for all receipt types)
+                receipt += 'Customer: ' + orderData.customerName + LF;
+                if (orderData.customerPhone) {
+                    receipt += 'Phone: ' + orderData.customerPhone + LF;
+                }
+                
+                // Delivery details (show for all except kitchen if needed)
+                if (orderData.receiptType !== 'KITCHEN ORDER' || orderData.deliveryType === 'Delivery') {
+                    receipt += '--------------------------------' + LF;
+                    receipt += 'DELIVERY INFO:' + LF;
+                    receipt += 'Date: ' + (orderData.deliveryDate || 'N/A') + LF;
+                    receipt += 'Time: ' + (orderData.deliveryTime || 'N/A') + LF;
+                    receipt += 'Type: ' + (orderData.deliveryType || 'Pickup') + LF;
+                    if (orderData.deliveryAddress && orderData.deliveryType === 'Delivery') {
+                        // Split long addresses into multiple lines
+                        const address = orderData.deliveryAddress;
+                        const maxLineLength = 30;
+                        const addressLines = [];
+                        let currentLine = '';
+                        const words = address.split(' ');
+                        
+                        for (const word of words) {
+                            if ((currentLine + word).length <= maxLineLength) {
+                                currentLine += (currentLine ? ' ' : '') + word;
+                            } else {
+                                if (currentLine) addressLines.push(currentLine);
+                                currentLine = word;
+                            }
+                        }
+                        if (currentLine) addressLines.push(currentLine);
+                        
+                        receipt += 'Address:' + LF;
+                        addressLines.forEach(line => {
+                            receipt += '  ' + line + LF;
+                        });
+                    }
+                }
+                receipt += '--------------------------------' + LF;
+                
+                // Items
+                receipt += ESC + '!' + '\x08'; // Emphasized
+                receipt += 'ITEMS:' + LF;
+                receipt += ESC + '!' + '\x00'; // Normal
+                
+                orderData.items.forEach(item => {
+                    receipt += item.itemName + LF;
+                    receipt += '  ' + item.sizeName;
+                    if (item.spiceLevel && item.spiceLevel !== 'N/A') {
+                        receipt += ' (' + item.spiceLevel + ')';
+                    }
+                    receipt += LF;
+                    receipt += '  Qty: ' + item.quantity + LF;
+                    if (item.instructions) {
+                        // Break long instructions into lines
+                        const instructions = item.instructions;
+                        const maxLineLength = 28;
+                        const words = instructions.split(' ');
+                        let currentLine = '';
+                        
+                        receipt += '  Note: ';
+                        for (const word of words) {
+                            if ((currentLine + word).length <= maxLineLength) {
+                                currentLine += (currentLine ? ' ' : '') + word;
+                            } else {
+                                if (currentLine) receipt += currentLine + LF + '        ';
+                                currentLine = word;
+                            }
+                        }
+                        if (currentLine) receipt += currentLine + LF;
+                    }
+                    receipt += LF;
+                });
+                
+                receipt += '--------------------------------' + LF;
+                
+                // Pricing (show/hide based on receipt type)
+                if (orderData.showPricing !== false) {
+                    receipt += ESC + 'a' + '\x02'; // Right alignment
+                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice) {
+                        receipt += 'Subtotal: $' + orderData.subtotal + LF;
+                    }
+                    if (orderData.discountPercent > 0) {
+                        receipt += 'Discount (' + orderData.discountPercent + '%): -$' + orderData.discountAmount + LF;
+                    }
+                    receipt += ESC + '!' + '\x18'; // Double size
+                    receipt += 'TOTAL: $' + orderData.totalPrice + LF;
+                    receipt += ESC + '!' + '\x00'; // Normal size
+                    receipt += '--------------------------------' + LF;
+                }
+                
+                // Special instructions (show for all receipt types)
+                if (orderData.specialInstructions) {
+                    receipt += ESC + 'a' + '\x00'; // Left alignment
+                    receipt += 'SPECIAL INSTRUCTIONS:' + LF;
+                    // Break long instructions into lines
+                    const instructions = orderData.specialInstructions;
+                    const maxLineLength = 32;
+                    const words = instructions.split(' ');
+                    let currentLine = '';
+                    
+                    for (const word of words) {
+                        if ((currentLine + word).length <= maxLineLength) {
+                            currentLine += (currentLine ? ' ' : '') + word;
+                        } else {
+                            if (currentLine) receipt += currentLine + LF;
+                            currentLine = word;
+                        }
+                    }
+                    if (currentLine) receipt += currentLine + LF;
+                    receipt += '--------------------------------' + LF;
+                }
+                
+                // Footer - Customized by receipt type
+                receipt += ESC + 'a' + '\x01'; // Center alignment
+                receipt += LF;
+                if (orderData.receiptType === 'KITCHEN ORDER') {
+                    receipt += '*** KITCHEN COPY ***' + LF;
+                    receipt += 'Prepare this order' + LF;
+                } else if (orderData.receiptType === 'CUSTOMER RECEIPT') {
+                    receipt += 'Thank you for your order!' + LF;
+                    receipt += 'Please keep this receipt' + LF;
+                } else if (orderData.receiptType === 'FRONT DESK RECEIPT') {
+                    receipt += '*** FRONT DESK COPY ***' + LF;
+                    receipt += 'Order management record' + LF;
+                } else {
+                    receipt += 'Thank you for your order!' + LF;
+                }
+                receipt += LF + LF + LF + LF + LF; // Extra line feeds to ensure complete printing
+                
+                // Cut paper - add multiple cut commands for reliability
+                receipt += GS + 'V' + '\x42' + '\x00'; // Full cut
+                receipt += GS + 'V' + '\x41' + '\x03'; // Partial cut as backup
+                
+                return receipt;
             }
-            var frontdeskBtn = document.getElementById('print-frontdesk-btn');
-            var customerBtn = document.getElementById('print-customer-btn');
-            var kitchenBtn = document.getElementById('print-kitchen-btn');
+
+            function printToThermalPrinter(receiptData) {
+                // Option 1: Direct USB/Serial printing (requires browser extension or app)
+                if (window.chrome && window.chrome.serial) {
+                    printViaWebSerial(receiptData);
+                } else if (window.navigator.usb) {
+                    printViaWebUSB(receiptData);
+                } else {
+                    // Fallback to browser print with thermal CSS
+                    printViaCSS();
+                }
+            }
+
+            // Web Serial API for direct printer connection
+            async function printViaWebSerial(receiptData) {
+                try {
+                    const port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 9600 });
+                    
+                    const writer = port.writable.getWriter();
+                    const encoder = new TextEncoder();
+                    
+                    // Send data in chunks to ensure complete transmission
+                    const data = encoder.encode(receiptData);
+                    const chunkSize = 64; // Small chunks for better compatibility
+                    
+                    for (let i = 0; i < data.length; i += chunkSize) {
+                        const chunk = data.slice(i, i + chunkSize);
+                        await writer.write(chunk);
+                        // Small delay between chunks
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    
+                    // Ensure all data is sent before closing
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                    writer.releaseLock();
+                    await port.close();
+                    
+                    window.showNotification && window.showNotification('✅ Receipt printed successfully to thermal printer!', 'success');
+                } catch (error) {
+                    console.error('Serial printing failed:', error);
+                    window.showNotification && window.showNotification('⚠️ Direct printing failed, using fallback method', 'info');
+                    printViaCSS(); // Fallback
+                }
+            }
+
+            // Web USB API for USB thermal printers
+            async function printViaWebUSB(receiptData) {
+                try {
+                    const device = await navigator.usb.requestDevice({
+                        filters: [
+                            { vendorId: 0x04b8 }, // Epson
+                            { vendorId: 0x0519 }, // Star Micronics
+                            { vendorId: 0x1504 }, // Citizen
+                        ]
+                    });
+                    
+                    await device.open();
+                    await device.selectConfiguration(1);
+                    await device.claimInterface(0);
+                    
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(receiptData);
+                    
+                    // Send in smaller chunks for USB stability
+                    const chunkSize = 512;
+                    for (let i = 0; i < data.length; i += chunkSize) {
+                        const chunk = data.slice(i, i + chunkSize);
+                        await device.transferOut(1, chunk);
+                        // Small delay between chunks
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    await device.close();
+                    
+                    window.showNotification && window.showNotification('✅ Receipt printed successfully to USB thermal printer!', 'success');
+                } catch (error) {
+                    console.error('USB printing failed:', error);
+                    window.showNotification && window.showNotification('⚠️ Direct printing failed, using fallback method', 'info');
+                    printViaCSS(); // Fallback
+                }
+            }
+
+            // Fallback: CSS-based printing (works with any printer)
+            function printViaCSS() {
+                // Force thermal print mode
+                document.body.classList.add('thermal-print');
+                
+                // Create a dedicated print window for better control
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                const orderData = extractOrderDataFromPage();
+                
+                // Generate HTML content for printing
+                const printContent = generateThermalHTML(orderData);
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Thermal Receipt</title>
+                        <style>
+                            @page {
+                                size: 80mm auto;
+                                margin: 2mm;
+                            }
+                            body {
+                                font-family: 'Courier New', monospace;
+                                font-size: 11px;
+                                line-height: 1.2;
+                                width: 72mm;
+                                margin: 0;
+                                padding: 2mm;
+                                background: #fff;
+                                color: #000;
+                            }
+                            .header {
+                                text-align: center;
+                                font-size: 14px;
+                                font-weight: bold;
+                                text-transform: uppercase;
+                                margin: 5px 0;
+                                border-bottom: 1px dashed #000;
+                                padding-bottom: 3px;
+                            }
+                            .separator {
+                                border-bottom: 1px dashed #000;
+                                margin: 5px 0;
+                                padding: 2px 0;
+                            }
+                            .section-title {
+                                font-weight: bold;
+                                font-size: 11px;
+                                text-transform: uppercase;
+                                margin: 8px 0 3px 0;
+                            }
+                            .item {
+                                margin: 3px 0;
+                                font-size: 10px;
+                            }
+                            .total {
+                                font-size: 14px;
+                                font-weight: bold;
+                                text-align: right;
+                                margin: 8px 0;
+                            }
+                            .footer {
+                                text-align: center;
+                                margin: 10px 0;
+                                font-size: 10px;
+                            }
+                            .right-align {
+                                text-align: right;
+                            }
+                            .center-align {
+                                text-align: center;
+                            }
+                            * {
+                                max-width: 72mm;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${printContent}
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+                
+                // Wait for content to load, then print
+                setTimeout(() => {
+                    printWindow.print();
+                    setTimeout(() => {
+                        printWindow.close();
+                        document.body.classList.remove('thermal-print');
+                    }, 1000);
+                }, 500);
+            }
+
+            // Generate HTML content for thermal printing
+            function generateThermalHTML(orderData) {
+                let html = '';
+                
+                // Header
+                html += `<div class="header">${orderData.receiptType || 'CATERING RECEIPT'}</div>`;
+                html += '<div class="separator">================================</div>';
+                
+                // Order info
+                html += `<div>Order #: ${orderData.orderId}</div>`;
+                html += `<div>Date: ${new Date().toLocaleDateString()}</div>`;
+                html += `<div>Time: ${new Date().toLocaleTimeString()}</div>`;
+                html += '<div class="separator">--------------------------------</div>';
+                
+                // Customer info
+                html += `<div>Customer: ${orderData.customerName}</div>`;
+                if (orderData.customerPhone) {
+                    html += `<div>Phone: ${orderData.customerPhone}</div>`;
+                }
+                
+                // Delivery details (show for all except kitchen if needed)
+                if (orderData.receiptType !== 'KITCHEN ORDER' || orderData.deliveryType === 'Delivery') {
+                    html += '<div class="separator">--------------------------------</div>';
+                    html += '<div class="section-title">DELIVERY INFO:</div>';
+                    html += `<div>Date: ${orderData.deliveryDate || 'N/A'}</div>`;
+                    html += `<div>Time: ${orderData.deliveryTime || 'N/A'}</div>`;
+                    html += `<div>Type: ${orderData.deliveryType || 'Pickup'}</div>`;
+                    if (orderData.deliveryAddress && orderData.deliveryType === 'Delivery') {
+                        html += '<div>Address:</div>';
+                        // Break long addresses
+                        const address = orderData.deliveryAddress;
+                        const maxLineLength = 30;
+                        const words = address.split(' ');
+                        let currentLine = '';
+                        
+                        for (const word of words) {
+                            if ((currentLine + word).length <= maxLineLength) {
+                                currentLine += (currentLine ? ' ' : '') + word;
+                            } else {
+                                if (currentLine) html += `<div>  ${currentLine}</div>`;
+                                currentLine = word;
+                            }
+                        }
+                        if (currentLine) html += `<div>  ${currentLine}</div>`;
+                    }
+                }
+                html += '<div class="separator">--------------------------------</div>';
+                
+                // Items
+                html += '<div class="section-title">ITEMS:</div>';
+                orderData.items.forEach(item => {
+                    html += `<div class="item"><strong>${item.itemName}</strong></div>`;
+                    html += `<div class="item">  ${item.sizeName}`;
+                    if (item.spiceLevel && item.spiceLevel !== 'N/A') {
+                        html += ` (${item.spiceLevel})`;
+                    }
+                    html += '</div>';
+                    html += `<div class="item">  Qty: ${item.quantity}</div>`;
+                    if (item.instructions) {
+                        // Break long instructions
+                        const instructions = item.instructions;
+                        const maxLineLength = 28;
+                        const words = instructions.split(' ');
+                        let currentLine = '';
+                        
+                        html += '<div class="item">  Note: ';
+                        for (const word of words) {
+                            if ((currentLine + word).length <= maxLineLength) {
+                                currentLine += (currentLine ? ' ' : '') + word;
+                            } else {
+                                if (currentLine) html += `${currentLine}<br>        `;
+                                currentLine = word;
+                            }
+                        }
+                        if (currentLine) html += currentLine;
+                        html += '</div>';
+                    }
+                    html += '<div style="margin: 3px 0;"></div>';
+                });
+                
+                html += '<div class="separator">--------------------------------</div>';
+                
+                // Pricing (show/hide based on receipt type)
+                if (orderData.showPricing !== false) {
+                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice) {
+                        html += `<div class="right-align">Subtotal: $${orderData.subtotal}</div>`;
+                    }
+                    if (orderData.discountPercent > 0) {
+                        html += `<div class="right-align">Discount (${orderData.discountPercent}%): -$${orderData.discountAmount}</div>`;
+                    }
+                    html += `<div class="total">TOTAL: $${orderData.totalPrice}</div>`;
+                    html += '<div class="separator">--------------------------------</div>';
+                }
+                
+                // Special instructions
+                if (orderData.specialInstructions) {
+                    html += '<div class="section-title">SPECIAL INSTRUCTIONS:</div>';
+                    // Break long instructions
+                    const instructions = orderData.specialInstructions;
+                    const maxLineLength = 32;
+                    const words = instructions.split(' ');
+                    let currentLine = '';
+                    
+                    for (const word of words) {
+                        if ((currentLine + word).length <= maxLineLength) {
+                            currentLine += (currentLine ? ' ' : '') + word;
+                        } else {
+                            if (currentLine) html += `<div>${currentLine}</div>`;
+                            currentLine = word;
+                        }
+                    }
+                    if (currentLine) html += `<div>${currentLine}</div>`;
+                    html += '<div class="separator">--------------------------------</div>';
+                }
+                
+                // Footer
+                html += '<div class="footer">';
+                if (orderData.receiptType === 'KITCHEN ORDER') {
+                    html += '*** KITCHEN COPY ***<br>Prepare this order';
+                } else if (orderData.receiptType === 'CUSTOMER RECEIPT') {
+                    html += 'Thank you for your order!<br>Please keep this receipt';
+                } else if (orderData.receiptType === 'FRONT DESK RECEIPT') {
+                    html += '*** FRONT DESK COPY ***<br>Order management record';
+                } else {
+                    html += 'Thank you for your order!';
+                }
+                html += '</div>';
+                
+                return html;
+            }
+
+            function handlePrint(mode) {
+                // Get current order data from the page
+                const orderData = extractOrderDataFromPage();
+                
+                // Customize receipt content based on print type
+                if (mode === 'kitchen') {
+                    orderData.showPricing = false; // Hide pricing for kitchen
+                    orderData.receiptType = 'KITCHEN ORDER';
+                } else if (mode === 'customer') {
+                    orderData.showPricing = true;
+                    orderData.receiptType = 'CUSTOMER RECEIPT';
+                } else if (mode === 'frontdesk') {
+                    orderData.showPricing = true;
+                    orderData.receiptType = 'FRONT DESK RECEIPT';
+                } else {
+                    orderData.showPricing = true;
+                    orderData.receiptType = 'CATERING RECEIPT';
+                }
+                
+                // All receipts now use thermal format
+                const receiptData = generateThermalReceipt(orderData);
+                printToThermalPrinter(receiptData);
+            }
+
+            function extractOrderDataFromPage() {
+                // Extract order data from the rendered page
+                const container = document.getElementById('order-details-container');
+                if (!container) {
+                    console.log('Order details container not found');
+                    return {};
+                }
+
+                console.log('Container found, extracting data...');
+                console.log('Container HTML:', container.innerHTML.substring(0, 500) + '...');
+
+                const orderIdElement = container.querySelector('h2');
+                const orderId = orderIdElement ? orderIdElement.textContent.replace('Order #', '').trim() : 'N/A';
+                console.log('Order ID:', orderId);
+                
+                // Extract customer name and details from the Customer Details section
+                let customerName = 'N/A', customerPhone = '', customerEmail = '';
+                const customerSection = container.querySelector('div[style*="background: #f8f9fa"]');
+                console.log('Customer section found:', customerSection ? 'Yes' : 'No');
+                
+                if (customerSection) {
+                    console.log('Customer section HTML:', customerSection.innerHTML);
+                    const customerParagraphs = customerSection.querySelectorAll('p');
+                    customerParagraphs.forEach(p => {
+                        const text = p.textContent;
+                        console.log('Customer paragraph text:', text);
+                        if (text.includes('Name:')) customerName = text.split('Name:')[1].trim();
+                        if (text.includes('Phone:')) customerPhone = text.split('Phone:')[1].trim();
+                        if (text.includes('Email:')) customerEmail = text.split('Email:')[1].trim();
+                    });
+                } else {
+                    // Fallback: try to find customer info anywhere in the container
+                    console.log('Using fallback method for customer data');
+                    const allParagraphs = container.querySelectorAll('p');
+                    allParagraphs.forEach(p => {
+                        const text = p.textContent;
+                        if (text.includes('Name:')) customerName = text.split('Name:')[1].trim();
+                        if (text.includes('Phone:')) customerPhone = text.split('Phone:')[1].trim();
+                        if (text.includes('Email:')) customerEmail = text.split('Email:')[1].trim();
+                    });
+                }
+                console.log('Customer data extracted:', { customerName, customerPhone, customerEmail });
+                
+                // Extract delivery details from the Delivery Details section
+                let deliveryDate = '', deliveryTime = '', deliveryType = 'Pickup', deliveryAddress = '';
+                const deliverySection = container.querySelector('div[style*="background: #f0fff4"]');
+                console.log('Delivery section found:', deliverySection ? 'Yes' : 'No');
+                
+                if (deliverySection) {
+                    console.log('Delivery section HTML:', deliverySection.innerHTML);
+                    const deliveryParagraphs = deliverySection.querySelectorAll('p');
+                    deliveryParagraphs.forEach(p => {
+                        const text = p.textContent;
+                        console.log('Delivery paragraph text:', text);
+                        if (text.includes('Delivery Date:')) deliveryDate = text.split('Delivery Date:')[1].trim();
+                        if (text.includes('Delivery Time:')) deliveryTime = text.split('Delivery Time:')[1].trim();
+                        if (text.includes('Type:')) deliveryType = text.split('Type:')[1].trim();
+                        if (text.includes('Address:')) {
+                            // Address might be in a span element
+                            const addressSpan = p.querySelector('span');
+                            if (addressSpan) {
+                                deliveryAddress = addressSpan.textContent.trim();
+                            } else {
+                                deliveryAddress = text.split('Address:')[1].trim();
+                            }
+                        }
+                    });
+                } else {
+                    // Fallback: try to find delivery info anywhere in the container
+                    console.log('Using fallback method for delivery data');
+                    const allParagraphs = container.querySelectorAll('p');
+                    allParagraphs.forEach(p => {
+                        const text = p.textContent;
+                        if (text.includes('Delivery Date:')) deliveryDate = text.split('Delivery Date:')[1].trim();
+                        if (text.includes('Delivery Time:')) deliveryTime = text.split('Delivery Time:')[1].trim();
+                        if (text.includes('Type:') && !text.includes('Receipt Type:')) deliveryType = text.split('Type:')[1].trim();
+                        if (text.includes('Address:')) {
+                            const addressSpan = p.querySelector('span');
+                            if (addressSpan) {
+                                deliveryAddress = addressSpan.textContent.trim();
+                            } else {
+                                deliveryAddress = text.split('Address:')[1].trim();
+                            }
+                        }
+                    });
+                }
+                console.log('Delivery data extracted:', { deliveryDate, deliveryTime, deliveryType, deliveryAddress });
+                
+                // Extract special instructions from the Instructions section
+                let specialInstructions = '';
+                const instructionsSection = container.querySelector('div[style*="background: #f5f5f5"]');
+                console.log('Instructions section found:', instructionsSection ? 'Yes' : 'No');
+                
+                if (instructionsSection) {
+                    const instructionsP = instructionsSection.querySelector('p');
+                    if (instructionsP) {
+                        const instructionsText = instructionsP.textContent.trim();
+                        if (instructionsText && !instructionsText.includes('None provided')) {
+                            specialInstructions = instructionsText;
+                        }
+                    }
+                } else {
+                    // Fallback: look for instructions in any paragraph
+                    const allParagraphs = container.querySelectorAll('p');
+                    allParagraphs.forEach(p => {
+                        const text = p.textContent;
+                        if (text.toLowerCase().includes('instruction') || text.toLowerCase().includes('allerg') || text.toLowerCase().includes('special')) {
+                            specialInstructions = text.replace(/Special Instructions.*?:/gi, '').trim();
+                        }
+                    });
+                }
+                console.log('Special instructions extracted:', specialInstructions);
+
+                // Extract items from the items list
+                const itemsList = container.querySelector('.details-item-list');
+                const items = [];
+                if (itemsList) {
+                    const listItems = itemsList.querySelectorAll('li');
+                    listItems.forEach(li => {
+                        const text = li.textContent;
+                        const match = text.match(/^(.+?) \((.+?)\)/);
+                        if (match) {
+                            // Extract instructions if present
+                            const instructionsMatch = text.match(/📝 (.+)$/);
+                            const instructions = instructionsMatch ? instructionsMatch[1].trim() : '';
+                            
+                            // Extract quantity from size name if it contains quantity info
+                            let sizeName = match[2].trim();
+                            let quantity = 1;
+                            const qtyMatch = sizeName.match(/(\d+)\s+(.+)/);
+                            if (qtyMatch) {
+                                quantity = parseInt(qtyMatch[1]);
+                                sizeName = qtyMatch[2];
+                            }
+                            
+                            items.push({
+                                itemName: match[1].trim(),
+                                sizeName: sizeName,
+                                spiceLevel: 'N/A',
+                                quantity: quantity,
+                                instructions: instructions
+                            });
+                        }
+                    });
+                }
+                console.log('Items extracted:', items.length, 'items');
+
+                // Extract pricing information from the Pricing section
+                let totalPrice = '0.00';
+                let subtotal = '0.00';
+                let discountAmount = '0.00';
+                let discountPercent = 0;
+
+                // Look for total price in the pricing block
+                const pricingBlock = container.querySelector('.order-details-pricing-block');
+                if (pricingBlock) {
+                    // Get main total price
+                    const totalElement = pricingBlock.querySelector('.order-details-price') || 
+                                      pricingBlock.querySelector('[style*="font-size: 32px"]') || 
+                                      pricingBlock.querySelector('[style*="font-size: 24px"]');
+                    if (totalElement) {
+                        totalPrice = totalElement.textContent.replace('$', '').trim();
+                    }
+
+                    // Look for subtotal and discount in pricing section
+                    const pricingSection = pricingBlock.querySelector('.order-details-pricing');
+                    if (pricingSection) {
+                        const pricingParagraphs = pricingSection.querySelectorAll('p');
+                        pricingParagraphs.forEach(p => {
+                            const text = p.textContent;
+                            if (text.includes('Subtotal:')) {
+                                const subtotalMatch = text.match(/\$(\d+\.?\d*)/);
+                                if (subtotalMatch) subtotal = subtotalMatch[1];
+                            }
+                            if (text.includes('Discount')) {
+                                const percentMatch = text.match(/\((\d+)%\)/);
+                                const amountMatch = text.match(/-?\$(\d+\.?\d*)/);
+                                if (percentMatch) discountPercent = parseInt(percentMatch[1]);
+                                if (amountMatch) discountAmount = amountMatch[1];
+                            }
+                        });
+                    }
+                }
+
+                // If subtotal not found, use total price
+                if (subtotal === '0.00') {
+                    subtotal = totalPrice;
+                }
+                console.log('Pricing extracted:', { totalPrice, subtotal, discountPercent, discountAmount });
+
+                const extractedData = {
+                    orderId,
+                    customerName,
+                    customerPhone,
+                    customerEmail,
+                    deliveryDate,
+                    deliveryTime,
+                    deliveryType,
+                    deliveryAddress,
+                    specialInstructions,
+                    items,
+                    totalPrice,
+                    subtotal,
+                    discountPercent,
+                    discountAmount
+                };
+                
+                // Debug log to help troubleshoot
+                console.log('Final extracted order data:', extractedData);
+                
+                return extractedData;
+            }
+            
+            // Add event listeners
+            const frontdeskBtn = document.getElementById('print-frontdesk-btn');
+            const customerBtn = document.getElementById('print-customer-btn');
+            const kitchenBtn = document.getElementById('print-kitchen-btn');
+            
             if (frontdeskBtn) {
                 frontdeskBtn.addEventListener('click', function() {
                     handlePrint('frontdesk');
@@ -59,13 +766,140 @@
                     handlePrint('kitchen');
                 });
             }
+            
         });
         </script>
     <style>
     @media print {
         #print-frontdesk-btn, #print-customer-btn, #print-kitchen-btn { display: none !important; }
-        .app-header, nav, .btn-secondary { display: none !important; }
+        .app-header, nav, .btn-secondary, .btn-primary { display: none !important; }
         body, .container, .form-container { box-shadow: none !important; background: #fff !important; }
+        
+        /* Enhanced Thermal Print Styles - Fixed Layout */
+        body.thermal-print {
+            font-family: 'Courier New', monospace !important;
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+            width: 70mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        @page {
+            size: 80mm auto;
+            margin: 2mm;
+        }
+        
+        body.thermal-print .container {
+            max-width: 70mm !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        body.thermal-print h2 {
+            text-align: center !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            margin: 5px 0 !important;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 3px;
+        }
+        
+        body.thermal-print .order-details-pricing-block {
+            width: 100% !important;
+        }
+        
+        body.thermal-print .order-details-price {
+            font-size: 16px !important;
+            text-align: center !important;
+            font-weight: bold !important;
+            margin: 10px 0 !important;
+        }
+        
+        body.thermal-print p {
+            margin: 2px 0 !important;
+            font-size: 10px !important;
+        }
+        
+        body.thermal-print strong {
+            font-weight: bold !important;
+        }
+        
+        body.thermal-print .details-item-list {
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 5px 0 !important;
+        }
+        
+        body.thermal-print .details-item-list li {
+            margin: 3px 0 !important;
+            font-size: 10px !important;
+            border-bottom: none !important;
+        }
+        
+        body.thermal-print h3 {
+            font-size: 11px !important;
+            font-weight: bold !important;
+            margin: 8px 0 3px 0 !important;
+            text-transform: uppercase;
+            border-bottom: 1px dashed #000;
+        }
+        
+        /* FIX: Convert grid layout to single column for thermal printing */
+        body.thermal-print [style*="display: grid"] {
+            display: block !important;
+            grid-template-columns: none !important;
+            gap: 5px !important;
+        }
+        
+        body.thermal-print [style*="grid-template-columns"] {
+            display: block !important;
+            grid-template-columns: none !important;
+        }
+        
+        body.thermal-print [style*="grid"] > div {
+            display: block !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
+            padding: 5px 0 !important;
+            background: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border-left: none !important;
+        }
+        
+        /* Force all sections to be full width */
+        body.thermal-print div[style*="background: #f8f9fa"],
+        body.thermal-print div[style*="background: #f0fff4"],
+        body.thermal-print div[style*="background: #fffbf0"],
+        body.thermal-print div[style*="background: #fff5f7"],
+        body.thermal-print div[style*="background: #f5f5f5"] {
+            width: 100% !important;
+            display: block !important;
+            background: transparent !important;
+            padding: 5px 0 !important;
+            margin: 5px 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+        
+        /* Ensure text doesn't get cut off */
+        body.thermal-print * {
+            max-width: 70mm !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        
+        /* Address line breaking */
+        body.thermal-print p[style*="font-size: 14px"] {
+            font-size: 9px !important;
+            line-height: 1.3 !important;
+            word-break: break-all !important;
+        }
+        
         /* Hide price section for kitchen print */
         body.print-kitchen .order-details-container .order-details-price,
         body.print-kitchen .order-details-container .order-details-total,
@@ -78,6 +912,18 @@
         body.print-kitchen .order-details-container [style*="font-size: 18px"],
         body.print-kitchen .order-details-container [style*="font-size: 32px"] {
             display: none !important;
+        }
+        
+        /* Additional thermal print optimizations */
+        body.thermal-print .order-details-pricing-block > div {
+            display: block !important;
+            width: 100% !important;
+        }
+        
+        body.thermal-print .order-details-pricing-block > div > div {
+            display: block !important;
+            width: 100% !important;
+            margin-bottom: 10px !important;
         }
     }
     </style>
