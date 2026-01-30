@@ -7,45 +7,22 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Auth check and Cognito SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        // Protect this page - redirect to login if not authenticated
-        (async () => {
-            const authenticated = await requireAuth();
-            if (!authenticated) return;
-            
-            // Add logout button to header
-            const userInfo = await getCurrentUserInfo();
-            if (userInfo) {
-                document.addEventListener('DOMContentLoaded', () => {
-                    const nav = document.querySelector('nav');
-                    if (nav) {
-                        const logoutBtn = document.createElement('a');
-                        logoutBtn.href = '#';
-                        logoutBtn.textContent = `Logout (${userInfo.username})`;
-                        logoutBtn.style.marginLeft = 'auto';
-                        logoutBtn.onclick = (e) => {
-                            e.preventDefault();
-                            logout();
-                        };
-                        nav.appendChild(logoutBtn);
-                    }
-                });
-            }
-        })();
-    </script>
+    <!-- Realistic Animated Forest Background -->
+    <div class="forest-layer"></div>
+    <div class="forest-leaves"></div>
+    <div class="sunlight-rays"></div>
+    <div class="wind-effect"></div>
+    
     <div id="splash-screen">
         <img src="images/vanam.png" alt="Vanam Catering Logo" class="splash-image">
         <button id="enter-app-btn" class="btn-primary">Enter Catering App</button>
     </div>
     <header class="app-header">
-        <h1>Catering</h1>
+        <h1>Vanam Catering</h1>
         <nav>
             <a href="index.html" class="active">Take Order</a>
             <a href="orders.html">View Orders</a>
-            <a href="admin.html" style="display: none;">Admin</a>
+            <!-- <a href="admin.html">Admin</a> -->
         </nav>
     </header>
     <main class="container">
@@ -78,11 +55,8 @@
                         <input type="time" id="delivery-time" name="delivery-time" required>
                     </div>
                 </fieldset>
-                <fieldset>
-                    <legend class="legend-with-action">
-                        <span>Menu Items</span>
-                        <a href="admin.html" style="display: none;" class="btn-add-item">+ Add New Item</a>
-                    </legend>
+                <fieldset id="menu-items-fieldset">
+                    <legend>Menu Items</legend>
                     <div id="menu-items-container">
                         <p>Loading menu...</p>
                     </div>
