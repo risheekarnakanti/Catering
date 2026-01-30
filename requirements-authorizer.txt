@@ -1,0 +1,5 @@
+# Lambda Authorizer Dependencies
+# Install these packages for cognito_authorizer.py
+
+PyJWT==2.8.0
+cryptography==41.0.7

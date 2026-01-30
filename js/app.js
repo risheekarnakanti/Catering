@@ -5,6 +5,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize cart
     window.orderCart = [];
 
+    // ===== AUTHENTICATED API HELPER =====
+    // Helper function to make authenticated API calls
+    async function authenticatedFetch(url, options = {}) {
+        try {
+            // Get the JWT token from Cognito
+            const token = await getIdToken();
+            
+            // Add Authorization header
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            
+            // Make the request with auth headers
+            return fetch(url, {
+                ...options,
+                headers
+            });
+        } catch (error) {
+            console.error('Authentication error:', error);
+            // If token is invalid, redirect to login
+            window.location.href = 'login.html';
+            throw error;
+        }
+    }
+
     // ===== ENHANCED NOTIFICATION SYSTEM =====
     // Inject styles for notifications programmatically
     const style = document.createElement('style');
@@ -601,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('menu-items-container');
         container.parentElement.id = 'menu-items-container-fieldset'; 
         try {
-            const response = await fetch(`${API_BASE_URL}/menu`);
+            const response = await authenticatedFetch(`${API_BASE_URL}/menu`);
             if (!response.ok) throw new Error('Failed to fetch menu.');
             const menuItems = await response.json();
             container.innerHTML = '';
