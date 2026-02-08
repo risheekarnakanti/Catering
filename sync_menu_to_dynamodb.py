@@ -2,6 +2,7 @@ import boto3
 import csv
 import os
 from decimal import Decimal
+from botocore.exceptions import ClientError
 
 def csv_to_dynamodb(csv_file_path, table_name, region_name='us-east-1'):
     """
@@ -9,10 +10,22 @@ def csv_to_dynamodb(csv_file_path, table_name, region_name='us-east-1'):
     """
     dynamodb = boto3.resource('dynamodb', region_name=region_name)
     table = dynamodb.Table(table_name)
+    client = dynamodb.meta.client
     
     print(f"Starting sync for '{csv_file_path}' to DynamoDB table '{table_name}'...")
 
     try:
+        # Ensure the table exists in the configured region
+        try:
+            client.describe_table(TableName=table_name)
+        except ClientError as e:
+            if e.response.get('Error', {}).get('Code') == 'ResourceNotFoundException':
+                tables = client.list_tables().get('TableNames', [])
+                print(f"Error: DynamoDB table '{table_name}' not found in region '{region_name}'.")
+                print(f"Available tables in {region_name}: {tables}")
+                return
+            raise
+
         with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             items_to_write = []
@@ -74,8 +87,8 @@ def csv_to_dynamodb(csv_file_path, table_name, region_name='us-east-1'):
 if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.abspath(__file__))
     CSV_FILE = os.path.join(script_dir, 'menu_template.csv')
-    DYNAMODB_TABLE = 'MenuItems'
-    REGION = 'us-east-1'
+    DYNAMODB_TABLE = os.getenv('MENU_TABLE_NAME', 'MenuItems')
+    REGION = os.getenv('AWS_REGION', 'us-east-1')
     
     csv_to_dynamodb(CSV_FILE, DYNAMODB_TABLE, REGION)
 

@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         .login-container {
-            max-width: 400px;
+            max-width: 420px;
             margin: 100px auto;
             padding: 40px;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         .login-container h2 {
             text-align: center;
@@ -39,11 +39,15 @@
             width: 100%;
             margin-top: 10px;
         }
+        .hidden {
+            display: none;
+        }
         .error-message {
             color: #dc3545;
             font-size: 14px;
             margin-top: 10px;
             text-align: center;
+            min-height: 18px;
         }
         .links {
             text-align: center;
@@ -61,7 +65,10 @@
 </head>
 <body>
     <div class="login-container">
-        <h2>🍽️ Catering Login</h2>
+        <div style="text-align: center; margin-bottom: 16px;">
+            <img src="images/vanam.png" alt="Vanam Catering Logo" style="max-width: 140px; height: auto;">
+        </div>
+        <h2>🍽️ Catering</h2>
         <form id="login-form" class="login-form">
             <div class="form-group">
                 <label for="username">Username or Email</label>
@@ -74,9 +81,27 @@
             <div class="error-message" id="error-message"></div>
             <button type="submit" class="btn-primary">Log In</button>
         </form>
-        <div class="links">
-            <a href="#" id="forgot-password-link">Forgot password?</a>
-        </div>
+        <form id="new-password-form" class="login-form hidden">
+            <div class="form-group hidden" id="new-password-email-group">
+                <label for="new-password-email">Email</label>
+                <input type="email" id="new-password-email" name="new-password-email" autocomplete="email">
+            </div>
+            <div class="form-group hidden" id="new-password-phone-group">
+                <label for="new-password-phone">Phone Number</label>
+                <input type="tel" id="new-password-phone" name="new-password-phone" autocomplete="tel" placeholder="+1XXXXXXXXXX">
+            </div>
+            <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password" name="new-password" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="confirm-new-password">Confirm New Password</label>
+                <input type="password" id="confirm-new-password" name="confirm-new-password" autocomplete="new-password">
+            </div>
+            <div class="error-message" id="new-password-error"></div>
+            <button type="submit" class="btn-primary">Set New Password</button>
+        </form>
+        
     </div>
 
     <!-- AWS Cognito SDK -->

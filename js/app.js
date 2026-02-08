@@ -1,35 +1,42 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // This is your specific API URL.
-    const API_BASE_URL = 'https://72thsowis3.execute-api.us-east-1.amazonaws.com/dev';
+    const API_BASE_URL = 'https://hjzzz06kfi.execute-api.us-east-1.amazonaws.com/dev';
     
     // Initialize cart
     window.orderCart = [];
 
-    // ===== AUTHENTICATED API HELPER =====
+    // Require authentication for all app pages
+    if (typeof requireAuth === 'function') {
+        const ok = await requireAuth();
+        if (!ok) {
+            return;
+        }
+    }
+
     // Helper function to make authenticated API calls
     async function authenticatedFetch(url, options = {}) {
-        try {
-            // Get the JWT token from Cognito
-            const token = await getIdToken();
-            
-            // Add Authorization header
-            const headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
-            
-            // Make the request with auth headers
-            return fetch(url, {
-                ...options,
-                headers
-            });
-        } catch (error) {
-            console.error('Authentication error:', error);
-            // If token is invalid, redirect to login
+        if (typeof getIdToken !== 'function') {
+            console.error('Auth helpers not loaded. Ensure auth.js is included before app.js.');
             window.location.href = 'login.html';
-            throw error;
+            throw new Error('Auth helpers not loaded');
         }
+
+        const token = await getIdToken();
+        if (!token) {
+            window.location.href = 'login.html';
+            throw new Error('Not authenticated');
+        }
+
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+
+        return fetch(url, {
+            ...options,
+            headers
+        });
     }
 
     // ===== ENHANCED NOTIFICATION SYSTEM =====
@@ -370,6 +377,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewDateInput = document.getElementById('view-date');
     const orderDetailsContainer = document.getElementById('order-details-container');
     const newMenuItemForm = document.getElementById('new-menu-item-form');
+
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink && typeof logout === 'function') {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+    }
 
     if (newOrderForm) {
         initializeCreateOrderPage();
@@ -944,9 +959,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         try {
-            const response = await fetch(`${API_BASE_URL}/orders`, {
+            const response = await authenticatedFetch(`${API_BASE_URL}/orders`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData),
             });
             const result = await response.json();
@@ -991,9 +1005,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pricing: pricing
         };
         try {
-            const response = await fetch(`${API_BASE_URL}/menu`, {
+            const response = await authenticatedFetch(`${API_BASE_URL}/menu`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(itemData)
             });
             const result = await response.json();
@@ -1016,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAndDisplayAdminMenu() {
         const container = document.getElementById('current-menu-list');
         try {
-            const response = await fetch(`${API_BASE_URL}/menu`);
+            const response = await authenticatedFetch(`${API_BASE_URL}/menu`);
             if (!response.ok) throw new Error('Failed to fetch menu.');
             const menuItems = await response.json();
             if (menuItems.length === 0) {
@@ -1046,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ordersListDiv = document.getElementById('orders-list');
         ordersListDiv.innerHTML = '<p>Loading orders...</p>';
         try {
-            const response = await fetch(`${API_BASE_URL}/orders/${date}`);
+            const response = await authenticatedFetch(`${API_BASE_URL}/orders/${date}`);
             const orders = await response.json();
             if (!response.ok) throw new Error(orders.message || 'Error fetching orders.');
             displayOrders(orders);
@@ -1086,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchOrderDetails(orderId) {
         const container = document.getElementById('order-details-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/order/${orderId}`);
+            const response = await authenticatedFetch(`${API_BASE_URL}/order/${orderId}`);
             if (!response.ok) throw new Error('Failed to fetch order details.');
             const items = await response.json();
             console.log('Raw order details response:', items);

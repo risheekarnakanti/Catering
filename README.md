@@ -104,7 +104,7 @@ Create these tables in AWS DynamoDB:
 #### 2.1 Update API URL
 Edit `js/app.js` line 3:
 ```javascript
-const API_BASE_URL = 'https://YOUR_API_GATEWAY_URL/dev';
+const API_BASE_URL = 'https://jx9bpvt58i.execute-api.us-east-1.amazonaws.com/dev';
 ```
 
 #### 2.2 Menu Setup
