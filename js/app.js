@@ -1243,35 +1243,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
 
             <!-- CUSTOMER DETAILS SECTION -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 25px;">
+            <div id="customer-details-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 25px;">
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4a90e2;">
                     <h3 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 12px;">👤 Customer Details</h3>
-                    <p style="margin: 8px 0;"><strong>Name:</strong> ${orderInfo.customerName}</p>
-                    <p style="margin: 8px 0;"><strong>Phone:</strong> ${orderInfo.customerPhone || 'N/A'}</p>
-                    <p style="margin: 8px 0;"><strong>Email:</strong> ${orderInfo.customerEmail || 'N/A'}</p>
-                    <p style="margin: 8px 0;"><strong>Status:</strong> <span style="background: #e7f3ff; padding: 3px 8px; border-radius: 4px; color: #0066cc;">${orderInfo.status}</span></p>
+                    <p style="margin: 8px 0;"><strong>Name:</strong> <span class="customer-name">${orderInfo.customerName}</span></p>
+                    <p style="margin: 8px 0;"><strong>Phone:</strong> <span class="customer-phone">${orderInfo.customerPhone || 'N/A'}</span></p>
+                    <p style="margin: 8px 0;"><strong>Email:</strong> <span class="customer-email">${orderInfo.customerEmail || 'N/A'}</span></p>
+                    <p style="margin: 8px 0;"><strong>Status:</strong> <span class="order-status" style="background: #e7f3ff; padding: 3px 8px; border-radius: 4px; color: #0066cc;">${orderInfo.status}</span></p>
                 </div>
 
                 <!-- DELIVERY DETAILS SECTION -->
-                <div style="background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #50e3c2;">
+                <div id="delivery-details-section" style="background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #50e3c2;">
                     <h3 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 12px;">🚚 Delivery Details</h3>
-                    <p style="margin: 8px 0;"><strong>Delivery Date:</strong> ${orderInfo.deliveryDate}</p>
-                    <p style="margin: 8px 0;"><strong>Delivery Time:</strong> ${formatTime(orderInfo.deliveryTime)}</p>
-                    <p style="margin: 8px 0;"><strong>Type:</strong> ${orderInfo.deliveryType || 'Pickup'}</p>
-                    ${orderInfo.deliveryType === 'Delivery' && orderInfo.deliveryAddress ? `<p style="margin: 8px 0;"><strong>Address:</strong><br><span style="font-size: 14px; color: #555;">${orderInfo.deliveryAddress}</span></p>` : ''}
+                    <p style="margin: 8px 0;"><strong>Delivery Date:</strong> <span class="delivery-date">${orderInfo.deliveryDate}</span></p>
+                    <p style="margin: 8px 0;"><strong>Delivery Time:</strong> <span class="delivery-time">${formatTime(orderInfo.deliveryTime)}</span></p>
+                    <p style="margin: 8px 0;"><strong>Type:</strong> <span class="delivery-type">${orderInfo.deliveryType || 'Pickup'}</span></p>
+                    ${orderInfo.deliveryType === 'Delivery' && orderInfo.deliveryAddress ? `<p style="margin: 8px 0;"><strong>Address:</strong><br><span class="delivery-address" style="font-size: 14px; color: #555;">${orderInfo.deliveryAddress}</span></p>` : ''}
                 </div>
             </div>
 
             <!-- ITEMS SECTION -->
-            <div style="background: #fff5f7; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 25px;">
+            <div id="items-section" style="background: #fff5f7; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 25px;">
                 <h3 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 12px;">🍽️ Order Items (${menuItems.length})</h3>
                 ${itemsHtml}
             </div>
 
             <!-- INSTRUCTIONS SECTION -->
-            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #6c757d;">
+            <div id="instructions-section" style="background: #f5f5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #6c757d;">
                 <h3 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 12px;">📝 Special Instructions & Allergies</h3>
-                <p style="margin: 0; color: #555; line-height: 1.6;">${orderInfo.customerSpecifications || '<em style="color: #999;">None provided.</em>'}</p>
+                <p class="special-instructions-text" style="margin: 0; color: #555; line-height: 1.6;">${orderInfo.customerSpecifications || '<em style="color: #999;">None provided.</em>'}</p>
             </div>
         `;
         container.innerHTML = detailsHtml;

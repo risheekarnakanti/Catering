@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details - CateringApp</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <!-- Realistic Animated Forest Background -->
     <div class="forest-layer"></div>
@@ -29,6 +31,7 @@
             <button id="print-frontdesk-btn" class="btn-secondary">🖨️ Front Desk Receipt</button>
             <button id="print-customer-btn" class="btn-secondary">🖨️ Customer Receipt</button>
             <button id="print-kitchen-btn" class="btn-secondary">🖨️ Kitchen Receipt</button>
+            <!-- Thermal button removed as logic is merged -->
         </div>
         <div style="clear: both;"></div>
         <div id="order-details-container" class="form-container">
@@ -37,50 +40,52 @@
             <p>Loading order details...</p>
         </div>
     </main>
-    
-    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Direct Thermal Print listener removed - Logic merged into standard buttons
             // Enhanced thermal printer support with ESC/POS commands
             function generateThermalReceipt(orderData) {
-                // ESC/POS commands for thermal printers
-                const ESC = '\x1B';
-                const GS = '\x1D';
-                const LF = '\x0A';
-                const CR = '\x0D';
-                
+                // ESC/POS commands using String.fromCharCode to ensure correct byte values
+                const ESC = String.fromCharCode(27);
+                const GS = String.fromCharCode(29);
+                const LF = String.fromCharCode(10);
+                const CR = String.fromCharCode(13);
+
                 let receipt = '';
-                
+
                 // Initialize printer
                 receipt += ESC + '@'; // Initialize printer
-                receipt += ESC + 'a' + '\x01'; // Center alignment
-                
+                receipt += ESC + 'a' + String.fromCharCode(1); // Center alignment
+
                 // Header - Different for each receipt type
-                receipt += ESC + '!' + '\x18'; // Double height & width
+                receipt += ESC + '!' + String.fromCharCode(24); // Double height & width
                 if (orderData.receiptType === 'KITCHEN ORDER') {
                     receipt += 'KITCHEN ORDER' + LF;
                 } else {
                     receipt += (orderData.receiptType || 'CATERING RECEIPT') + LF;
                 }
-                receipt += ESC + '!' + '\x00'; // Normal size
+                receipt += ESC + '!' + String.fromCharCode(0); // Normal size
                 receipt += '================================' + LF;
-                
+
                 // Order info
-                receipt += ESC + 'a' + '\x00'; // Left alignment
-                receipt += 'Order #: ' + orderData.orderId + LF;
+                receipt += ESC + 'a' + String.fromCharCode(0); // Left alignment
+                receipt += 'Order #: ' + (orderData.orderId || 'N/A') + LF;
                 receipt += 'Date: ' + new Date().toLocaleDateString() + LF;
                 receipt += 'Time: ' + new Date().toLocaleTimeString() + LF;
                 receipt += '--------------------------------' + LF;
-                
-                // Customer info (always show for all receipt types)
-                receipt += 'Customer: ' + orderData.customerName + LF;
-                if (orderData.customerPhone) {
+
+                // Customer info
+                receipt += 'Customer: ' + (orderData.customerName || 'N/A') + LF;
+                if (orderData.customerPhone && orderData.customerPhone !== 'N/A') {
                     receipt += 'Phone: ' + orderData.customerPhone + LF;
                 }
-                
-                // Delivery details (show for all except kitchen if needed)
+
+                // Delivery details
                 if (orderData.receiptType !== 'KITCHEN ORDER' || orderData.deliveryType === 'Delivery') {
                     receipt += '--------------------------------' + LF;
                     receipt += 'DELIVERY INFO:' + LF;
@@ -88,168 +93,226 @@
                     receipt += 'Time: ' + (orderData.deliveryTime || 'N/A') + LF;
                     receipt += 'Type: ' + (orderData.deliveryType || 'Pickup') + LF;
                     if (orderData.deliveryAddress && orderData.deliveryType === 'Delivery') {
-                        // Split long addresses into multiple lines
+                        receipt += 'Address:' + LF;
+                        // Split long addresses
                         const address = orderData.deliveryAddress;
                         const maxLineLength = 30;
-                        const addressLines = [];
-                        let currentLine = '';
                         const words = address.split(' ');
-                        
+                        let currentLine = '';
+
                         for (const word of words) {
-                            if ((currentLine + word).length <= maxLineLength) {
+                            if ((currentLine + word).length + 1 <= maxLineLength) {
                                 currentLine += (currentLine ? ' ' : '') + word;
                             } else {
-                                if (currentLine) addressLines.push(currentLine);
+                                if (currentLine) receipt += '  ' + currentLine + LF;
                                 currentLine = word;
                             }
                         }
-                        if (currentLine) addressLines.push(currentLine);
-                        
-                        receipt += 'Address:' + LF;
-                        addressLines.forEach(line => {
-                            receipt += '  ' + line + LF;
-                        });
+                        if (currentLine) receipt += '  ' + currentLine + LF;
                     }
                 }
                 receipt += '--------------------------------' + LF;
-                
+
                 // Items
-                receipt += ESC + '!' + '\x08'; // Emphasized
+                receipt += ESC + '!' + String.fromCharCode(8); // Emphasized
                 receipt += 'ITEMS:' + LF;
-                receipt += ESC + '!' + '\x00'; // Normal
-                
-                orderData.items.forEach(item => {
-                    receipt += item.itemName + LF;
-                    receipt += '  ' + item.sizeName;
-                    if (item.spiceLevel && item.spiceLevel !== 'N/A') {
-                        receipt += ' (' + item.spiceLevel + ')';
-                    }
-                    receipt += LF;
-                    receipt += '  Qty: ' + item.quantity + LF;
-                    if (item.instructions) {
-                        // Break long instructions into lines
-                        const instructions = item.instructions;
-                        const maxLineLength = 28;
-                        const words = instructions.split(' ');
-                        let currentLine = '';
-                        
-                        receipt += '  Note: ';
-                        for (const word of words) {
-                            if ((currentLine + word).length <= maxLineLength) {
-                                currentLine += (currentLine ? ' ' : '') + word;
-                            } else {
-                                if (currentLine) receipt += currentLine + LF + '        ';
-                                currentLine = word;
-                            }
+                receipt += ESC + '!' + String.fromCharCode(0); // Normal
+
+                if (orderData.items && orderData.items.length > 0) {
+                    orderData.items.forEach(item => {
+                        receipt += (item.itemName || 'Item') + LF;
+                        receipt += '  ' + (item.sizeName || '');
+                        if (item.spiceLevel && item.spiceLevel !== 'N/A') {
+                            receipt += ' (' + item.spiceLevel + ')';
                         }
-                        if (currentLine) receipt += currentLine + LF;
-                    }
-                    receipt += LF;
-                });
-                
+                        receipt += LF;
+                        receipt += '  Qty: ' + (item.quantity || 1) + LF;
+                        if (item.instructions) {
+                            receipt += '  Note: ' + item.instructions + LF;
+                        }
+                        receipt += LF;
+                    });
+                } else {
+                    receipt += 'No items extracted' + LF;
+                }
+
                 receipt += '--------------------------------' + LF;
-                
-                // Pricing (hide completely for kitchen receipts)
+
+                // Pricing
                 if (orderData.showPricing !== false && orderData.receiptType !== 'KITCHEN ORDER' && orderData.totalPrice) {
-                    receipt += ESC + 'a' + '\x02'; // Right alignment
-                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice && orderData.subtotal !== '') {
+                    receipt += ESC + 'a' + String.fromCharCode(2); // Right alignment
+                    if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice) {
                         receipt += 'Subtotal: $' + orderData.subtotal + LF;
                     }
-                    if (orderData.discountPercent > 0 && orderData.discountAmount) {
-                        receipt += 'Discount (' + orderData.discountPercent + '%): -$' + orderData.discountAmount + LF;
+                    if (orderData.discountPercent > 0) {
+                        receipt += 'Discount (' + orderData.discountPercent + '%): -$' + (orderData.discountAmount || '0.00') + LF;
                     }
-                    receipt += ESC + '!' + '\x18'; // Double size
+                    receipt += ESC + '!' + String.fromCharCode(24); // Double size
                     receipt += 'TOTAL: $' + orderData.totalPrice + LF;
-                    receipt += ESC + '!' + '\x00'; // Normal size
+                    receipt += ESC + '!' + String.fromCharCode(0); // Normal size
                     receipt += '--------------------------------' + LF;
-                } else if (orderData.receiptType === 'KITCHEN ORDER') {
-                    console.log('Kitchen receipt: No pricing information included');
                 }
-                
-                // Special instructions (show for all receipt types)
-                if (orderData.specialInstructions) {
-                    receipt += ESC + 'a' + '\x00'; // Left alignment
+
+                // Special instructions
+                if (orderData.specialInstructions && orderData.specialInstructions !== 'None provided.') {
+                    receipt += ESC + 'a' + String.fromCharCode(0); // Left alignment
                     receipt += 'SPECIAL INSTRUCTIONS:' + LF;
-                    // Break long instructions into lines
-                    const instructions = orderData.specialInstructions;
-                    const maxLineLength = 32;
-                    const words = instructions.split(' ');
-                    let currentLine = '';
-                    
-                    for (const word of words) {
-                        if ((currentLine + word).length <= maxLineLength) {
-                            currentLine += (currentLine ? ' ' : '') + word;
-                        } else {
-                            if (currentLine) receipt += currentLine + LF;
-                            currentLine = word;
-                        }
-                    }
-                    if (currentLine) receipt += currentLine + LF;
+                    receipt += orderData.specialInstructions + LF;
                     receipt += '--------------------------------' + LF;
                 }
-                
-                // Footer - Customized by receipt type
-                receipt += ESC + 'a' + '\x01'; // Center alignment
+
+                // Footer
+                receipt += ESC + 'a' + String.fromCharCode(1); // Center alignment
                 receipt += LF;
                 if (orderData.receiptType === 'KITCHEN ORDER') {
                     receipt += '*** KITCHEN COPY ***' + LF;
-                    receipt += 'Prepare this order' + LF;
                 } else if (orderData.receiptType === 'CUSTOMER RECEIPT') {
                     receipt += 'Thank you for your order!' + LF;
-                    receipt += 'Please keep this receipt' + LF;
                 } else if (orderData.receiptType === 'FRONT DESK RECEIPT') {
                     receipt += '*** FRONT DESK COPY ***' + LF;
-                    receipt += 'Order management record' + LF;
                 } else {
                     receipt += 'Thank you for your order!' + LF;
                 }
-                receipt += LF + LF + LF + LF + LF; // Extra line feeds to ensure complete printing
-                
-                // Cut paper - add multiple cut commands for reliability
-                receipt += GS + 'V' + '\x42' + '\x00'; // Full cut
-                receipt += GS + 'V' + '\x41' + '\x03'; // Partial cut as backup
-                
-                return receipt;
+                receipt += LF + LF + LF + LF + LF;
+
+                // Cut
+                receipt += GS + 'V' + String.fromCharCode(66) + String.fromCharCode(0);
+
+                // Sanitize receipt to remove non-printable characters (except control codes)
+                // This removes emojis and other characters that might cause "garbage" printing
+                // unexpected control codes are kept (ESC, GS, etc are < 128)
+                // We want to keep 0x00-0x7F.
+                // But wait, our UTF-8 encoder will encode multi-byte chars correctly if the printer supported them.
+                // Since it likely doesn't, we strip them.
+                // However, we must be careful not to strip the control codes we validly added.
+                // Regular expression [^\x00-\x7F] matches non-ASCII.
+
+                return receipt.replace(/[^\x00-\x7F]/g, "");
+                // Actually, let's keep it simple. If the user wants emojis effectively, we can't.
+
             }
 
             function printToThermalPrinter(receiptData) {
                 // Option 1: Direct USB/Serial printing (requires browser extension or app)
                 if (window.chrome && window.chrome.serial) {
-                    printViaWebSerial(receiptData);
+                    printViaWebSerial(receiptData); // ESC/POS
                 } else if (window.navigator.usb) {
-                    printViaWebUSB(receiptData);
+                    printViaWebUSB(receiptData); // ESC/POS
                 } else {
                     // Fallback to browser print with thermal CSS
-                    printViaCSS();
+                    // Always use HTML generator for browser print (NO ESC/POS)
+                    const orderData = extractOrderDataFromPage();
+                    printViaCSS(orderData); // HTML only
                 }
             }
 
-            // Web Serial API for direct printer connection
+            // Enhanced Web Serial API for Volcora printer
+            async function printViaWebSerialAdvanced(receiptData) {
+                const baudRates = [115200, 38400, 19200, 9600]; // Try common baud rates, starting with fastest
+                let port = null;
+                for (let baudRate of baudRates) {
+                    try {
+                        console.log(`Trying WebSerial with baud rate: ${baudRate}`);
+                        port = await navigator.serial.requestPort();
+                        // If port is already open, close it first
+                        if (port && port.open && port.opened) {
+                            try {
+                                await port.close();
+                            } catch (closeErr) {
+                                console.warn('Port close error before open:', closeErr);
+                            }
+                        }
+                        await port.open({
+                            baudRate: baudRate,
+                            dataBits: 8,
+                            parity: 'none',
+                            stopBits: 1,
+                            flowControl: 'none'
+                        });
+
+                        const writer = port.writable.getWriter();
+                        // Convert receipt string to bytes (ESC/POS expects bytes)
+                        let data;
+                        if (window.TextEncoder && typeof TextEncoder === 'function') {
+                            // Try to use 'latin1' encoding if available
+                            try {
+                                data = new TextEncoder('latin1').encode(receiptData);
+                            } catch (e) {
+                                // Fallback to default (utf-8)
+                                data = new TextEncoder().encode(receiptData);
+                            }
+                        } else {
+                            // Fallback: ASCII only
+                            data = new Uint8Array([...receiptData].map(c => c.charCodeAt(0)));
+                        }
+                        const chunkSize = 64;
+                        for (let i = 0; i < data.length; i += chunkSize) {
+                            const chunk = data.slice(i, i + chunkSize);
+                            await writer.write(chunk);
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        writer.releaseLock();
+                        try {
+                            await port.close();
+                        } catch (closeErr) {
+                            console.warn('Port close error (ignoring as print sent):', closeErr);
+                        }
+                        alert('✅ Receipt printed successfully!');
+                        return true;
+                    } catch (error) {
+                        console.error(`Serial printing failed with baud rate ${baudRate}:`, error);
+                        if (port && port.opened) {
+                            try {
+                                await port.close();
+                            } catch (closeErr) {
+                                console.warn('Port close error after failure:', closeErr);
+                            }
+                        }
+                        if (error.name === 'InvalidStateError') {
+                            alert('❌ Serial port is already open. Please unplug and replug the printer, then try again.');
+                            return false;
+                        } else if (error.name === 'NotFoundError') {
+                            return false;
+                        } else if (error.name === 'SecurityError') {
+                            alert('❌ Permission denied.\n\nPlease allow access to the serial device and try again.');
+                            return false;
+                        }
+                        if (baudRate === baudRates[baudRates.length - 1]) {
+                            console.log('All baud rates failed');
+                            return false;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // Keep original for fallback
             async function printViaWebSerial(receiptData) {
                 try {
                     const port = await navigator.serial.requestPort();
                     await port.open({ baudRate: 9600 });
-                    
+
                     const writer = port.writable.getWriter();
                     const encoder = new TextEncoder();
-                    
+
                     // Send data in chunks to ensure complete transmission
                     const data = encoder.encode(receiptData);
                     const chunkSize = 64; // Small chunks for better compatibility
-                    
+
                     for (let i = 0; i < data.length; i += chunkSize) {
                         const chunk = data.slice(i, i + chunkSize);
                         await writer.write(chunk);
                         // Small delay between chunks
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
-                    
+
                     // Ensure all data is sent before closing
                     await new Promise(resolve => setTimeout(resolve, 200));
-                    
+
                     writer.releaseLock();
                     await port.close();
-                    
+
                     window.showNotification && window.showNotification('✅ Receipt printed successfully to thermal printer!', 'success');
                 } catch (error) {
                     console.error('Serial printing failed:', error);
@@ -258,7 +321,87 @@
                 }
             }
 
-            // Web USB API for USB thermal printers
+            // Enhanced Web USB API for Volcora and other thermal printers
+            async function printViaWebUSBAdvanced(receiptData) {
+                try {
+                    console.log('Requesting USB device access...');
+                    const device = await navigator.usb.requestDevice({
+                        filters: [
+                            { vendorId: 0x04b8 }, // Epson
+                            { vendorId: 0x0519 }, // Star Micronics
+                            { vendorId: 0x1504 }, // Citizen
+                            { vendorId: 0x0416 }, // Volcora/Generic thermal printers
+                            { vendorId: 0x0483 }, // STMicroelectronics (common for thermal printers)
+                            { vendorId: 0x1a86 }, // QinHeng Electronics (CH340 USB-Serial chips)
+                        ]
+                    });
+
+                    console.log('Device selected:', device);
+
+                    await device.open();
+
+                    // Try different configurations
+                    const configs = device.configurations;
+                    console.log('Available configurations:', configs.length);
+
+                    for (let config of configs) {
+                        try {
+                            await device.selectConfiguration(config.configurationValue);
+
+                            // Try different interfaces
+                            for (let iface of config.interfaces) {
+                                try {
+                                    await device.claimInterface(iface.interfaceNumber);
+
+                                    const encoder = new TextEncoder();
+                                    const data = encoder.encode(receiptData);
+
+                                    // Find the correct endpoint
+                                    const endpoint = iface.alternates[0].endpoints.find(ep => ep.direction === 'out');
+                                    if (endpoint) {
+                                        console.log(`Using endpoint ${endpoint.endpointNumber}`);
+
+                                        // Send data in chunks
+                                        const chunkSize = Math.min(512, endpoint.packetSize || 64);
+                                        for (let i = 0; i < data.length; i += chunkSize) {
+                                            const chunk = data.slice(i, i + chunkSize);
+                                            await device.transferOut(endpoint.endpointNumber, chunk);
+                                            await new Promise(resolve => setTimeout(resolve, 50));
+                                        }
+
+                                        await device.close();
+                                        alert('✅ Receipt printed successfully to Volcora USB thermal printer!');
+                                        return true; // Success
+                                    }
+                                } catch (ifaceError) {
+                                    console.log(`Interface ${iface.interfaceNumber} failed:`, ifaceError);
+                                }
+                            }
+                        } catch (configError) {
+                            console.log(`Configuration ${config.configurationValue} failed:`, configError);
+                        }
+                    }
+
+                    throw new Error('No working interface found');
+
+                } catch (error) {
+                    console.error('USB printing failed:', error);
+                    if (error.name === 'NotFoundError') {
+                        // Cancelled by user - return false silently/log
+                        return false;
+                    } else if (error.name === 'SecurityError') {
+                        alert('❌ Permission denied.\\n\\nPlease allow access to the USB device and try again.');
+                        return false;
+                    } else {
+                        // Other errors
+                        console.log('USB print generic error', error);
+                        return false;
+                    }
+                }
+                return false;
+            }
+
+            // Keep original for fallback
             async function printViaWebUSB(receiptData) {
                 try {
                     const device = await navigator.usb.requestDevice({
@@ -268,14 +411,14 @@
                             { vendorId: 0x1504 }, // Citizen
                         ]
                     });
-                    
+
                     await device.open();
                     await device.selectConfiguration(1);
                     await device.claimInterface(0);
-                    
+
                     const encoder = new TextEncoder();
                     const data = encoder.encode(receiptData);
-                    
+
                     // Send in smaller chunks for USB stability
                     const chunkSize = 512;
                     for (let i = 0; i < data.length; i += chunkSize) {
@@ -284,9 +427,9 @@
                         // Small delay between chunks
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
-                    
+
                     await device.close();
-                    
+
                     window.showNotification && window.showNotification('✅ Receipt printed successfully to USB thermal printer!', 'success');
                 } catch (error) {
                     console.error('USB printing failed:', error);
@@ -296,17 +439,12 @@
             }
 
             // Fallback: CSS-based printing (works with any printer)
-            function printViaCSS() {
+            function printViaCSS(orderData) {
                 // Force thermal print mode
                 document.body.classList.add('thermal-print');
-                
-                // Create a dedicated print window for better control
+                // Accept orderData as argument
                 const printWindow = window.open('', '_blank', 'width=400,height=600');
-                const orderData = extractOrderDataFromPage();
-                
-                // Generate HTML content for printing
                 const printContent = generateThermalHTML(orderData);
-                
                 printWindow.document.write(`
                     <!DOCTYPE html>
                     <html>
@@ -380,10 +518,7 @@
                     </body>
                     </html>
                 `);
-                
                 printWindow.document.close();
-                
-                // Wait for content to load, then print
                 setTimeout(() => {
                     printWindow.print();
                     setTimeout(() => {
@@ -396,7 +531,7 @@
             // Generate HTML content for thermal printing
             function generateThermalHTML(orderData) {
                 let html = '';
-                
+
                 // Header - Different for each receipt type
                 if (orderData.receiptType === 'KITCHEN ORDER') {
                     html += '<div class="header">KITCHEN ORDER</div>';
@@ -404,19 +539,19 @@
                     html += `<div class="header">${orderData.receiptType || 'CATERING RECEIPT'}</div>`;
                 }
                 html += '<div class="separator">================================</div>';
-                
+
                 // Order info
                 html += `<div>Order #: ${orderData.orderId}</div>`;
                 html += `<div>Date: ${new Date().toLocaleDateString()}</div>`;
                 html += `<div>Time: ${new Date().toLocaleTimeString()}</div>`;
                 html += '<div class="separator">--------------------------------</div>';
-                
+
                 // Customer info
                 html += `<div>Customer: ${orderData.customerName}</div>`;
                 if (orderData.customerPhone) {
                     html += `<div>Phone: ${orderData.customerPhone}</div>`;
                 }
-                
+
                 // Delivery details (show for all except kitchen if needed)
                 if (orderData.receiptType !== 'KITCHEN ORDER' || orderData.deliveryType === 'Delivery') {
                     html += '<div class="separator">--------------------------------</div>';
@@ -431,7 +566,7 @@
                         const maxLineLength = 30;
                         const words = address.split(' ');
                         let currentLine = '';
-                        
+
                         for (const word of words) {
                             if ((currentLine + word).length <= maxLineLength) {
                                 currentLine += (currentLine ? ' ' : '') + word;
@@ -444,7 +579,7 @@
                     }
                 }
                 html += '<div class="separator">--------------------------------</div>';
-                
+
                 // Items
                 html += '<div class="section-title">ITEMS:</div>';
                 orderData.items.forEach(item => {
@@ -461,7 +596,7 @@
                         const maxLineLength = 28;
                         const words = instructions.split(' ');
                         let currentLine = '';
-                        
+
                         html += '<div class="item">  Note: ';
                         for (const word of words) {
                             if ((currentLine + word).length <= maxLineLength) {
@@ -476,9 +611,9 @@
                     }
                     html += '<div style="margin: 3px 0;"></div>';
                 });
-                
+
                 html += '<div class="separator">--------------------------------</div>';
-                
+
                 // Pricing (hide completely for kitchen receipts)
                 if (orderData.showPricing !== false && orderData.receiptType !== 'KITCHEN ORDER' && orderData.totalPrice) {
                     if (orderData.subtotal && orderData.subtotal !== orderData.totalPrice && orderData.subtotal !== '') {
@@ -492,7 +627,7 @@
                 } else if (orderData.receiptType === 'KITCHEN ORDER') {
                     console.log('Browser print - Kitchen receipt: No pricing information included');
                 }
-                
+
                 // Special instructions
                 if (orderData.specialInstructions) {
                     html += '<div class="section-title">SPECIAL INSTRUCTIONS:</div>';
@@ -501,7 +636,7 @@
                     const maxLineLength = 32;
                     const words = instructions.split(' ');
                     let currentLine = '';
-                    
+
                     for (const word of words) {
                         if ((currentLine + word).length <= maxLineLength) {
                             currentLine += (currentLine ? ' ' : '') + word;
@@ -513,7 +648,7 @@
                     if (currentLine) html += `<div>${currentLine}</div>`;
                     html += '<div class="separator">--------------------------------</div>';
                 }
-                
+
                 // Footer
                 html += '<div class="footer">';
                 if (orderData.receiptType === 'KITCHEN ORDER') {
@@ -526,18 +661,17 @@
                     html += 'Thank you for your order!';
                 }
                 html += '</div>';
-                
+
                 return html;
             }
 
-            function handlePrint(mode) {
+            async function handlePrint(mode) {
                 console.log('=== HANDLE PRINT CALLED ===');
                 console.log('Print mode:', mode);
-                
+
                 // Get current order data from the page
                 const orderData = extractOrderDataFromPage();
-                console.log('Initial orderData:', orderData);
-                
+
                 // Customize receipt content based on print type
                 if (mode === 'kitchen') {
                     orderData.showPricing = false; // Hide pricing for kitchen
@@ -547,7 +681,6 @@
                     orderData.subtotal = '';
                     orderData.discountAmount = '';
                     orderData.discountPercent = 0;
-                    console.log('Kitchen receipt mode: pricing disabled and data removed');
                 } else if (mode === 'customer') {
                     orderData.showPricing = true;
                     orderData.receiptType = 'CUSTOMER RECEIPT';
@@ -558,207 +691,170 @@
                     orderData.showPricing = true;
                     orderData.receiptType = 'CATERING RECEIPT';
                 }
-                
+
                 console.log('Final orderData after mode customization:', orderData);
                 console.log('Receipt type set to:', orderData.receiptType);
                 console.log('Show pricing set to:', orderData.showPricing);
-                
-                // All receipts now use thermal format
-                const receiptData = generateThermalReceipt(orderData);
-                printToThermalPrinter(receiptData);
+
+                // Try Thermal Print First
+                if (navigator.serial || navigator.usb) {
+                    const receiptData = generateThermalReceipt(orderData); // ESC/POS
+                    let success = false;
+
+                    if (navigator.serial) {
+                        try {
+                            success = await printViaWebSerialAdvanced(receiptData);
+                        } catch (e) {
+                            console.log('Serial print attempt failed:', e);
+                        }
+                    }
+
+                    if (!success && navigator.usb) {
+                        try {
+                            success = await printViaWebUSBAdvanced(receiptData);
+                        } catch (e) {
+                            console.log('USB print attempt failed:', e);
+                        }
+                    }
+
+                    if (success) {
+                        console.log('Thermal print successful, no fallback needed.');
+                        return;
+                    } else {
+                        console.log('Thermal print failed or was not supported/selected, falling back to browser print.');
+                    }
+                }
+
+                // Fallback to Browser Print: use HTML generator only (NO ESC/POS)
+                printViaCSS(orderData);
             }
 
             function extractOrderDataFromPage() {
-                // Extract order data from the rendered page
-                const container = document.getElementById('order-details-container');
-                if (!container) {
-                    console.log('Order details container not found');
-                    return {};
+                // Parse Order ID
+                let orderId = 'N/A';
+                const orderIdHeader = document.querySelector('.order-details-pricing-block h2') || document.querySelector('h2');
+                if (orderIdHeader) {
+                    orderId = orderIdHeader.textContent.replace('Order #', '').trim();
                 }
 
-                console.log('Container found, extracting data...');
-                console.log('Container HTML:', container.innerHTML.substring(0, 500) + '...');
-
-                const orderIdElement = container.querySelector('h2');
-                const orderId = orderIdElement ? orderIdElement.textContent.replace('Order #', '').trim() : 'N/A';
-                console.log('Order ID:', orderId);
-                
-                // Extract customer name and details from the Customer Details section
+                // Parse Customer Details using new IDs and Classes
                 let customerName = 'N/A', customerPhone = '', customerEmail = '';
-                const customerSection = container.querySelector('div[style*="background: #f8f9fa"]');
-                console.log('Customer section found:', customerSection ? 'Yes' : 'No');
-                
+                const customerSection = document.getElementById('customer-details-section');
                 if (customerSection) {
-                    console.log('Customer section HTML:', customerSection.innerHTML);
-                    const customerParagraphs = customerSection.querySelectorAll('p');
-                    customerParagraphs.forEach(p => {
-                        const text = p.textContent;
-                        console.log('Customer paragraph text:', text);
-                        if (text.includes('Name:')) customerName = text.split('Name:')[1].trim();
-                        if (text.includes('Phone:')) customerPhone = text.split('Phone:')[1].trim();
-                        if (text.includes('Email:')) customerEmail = text.split('Email:')[1].trim();
-                    });
-                } else {
-                    // Fallback: try to find customer info anywhere in the container
-                    console.log('Using fallback method for customer data');
-                    const allParagraphs = container.querySelectorAll('p');
-                    allParagraphs.forEach(p => {
-                        const text = p.textContent;
-                        if (text.includes('Name:')) customerName = text.split('Name:')[1].trim();
-                        if (text.includes('Phone:')) customerPhone = text.split('Phone:')[1].trim();
-                        if (text.includes('Email:')) customerEmail = text.split('Email:')[1].trim();
-                    });
-                }
-                console.log('Customer data extracted:', { customerName, customerPhone, customerEmail });
-                
-                // Extract delivery details from the Delivery Details section
-                let deliveryDate = '', deliveryTime = '', deliveryType = 'Pickup', deliveryAddress = '';
-                const deliverySection = container.querySelector('div[style*="background: #f0fff4"]');
-                console.log('Delivery section found:', deliverySection ? 'Yes' : 'No');
-                
-                if (deliverySection) {
-                    console.log('Delivery section HTML:', deliverySection.innerHTML);
-                    const deliveryParagraphs = deliverySection.querySelectorAll('p');
-                    deliveryParagraphs.forEach(p => {
-                        const text = p.textContent;
-                        console.log('Delivery paragraph text:', text);
-                        if (text.includes('Delivery Date:')) deliveryDate = text.split('Delivery Date:')[1].trim();
-                        if (text.includes('Delivery Time:')) deliveryTime = text.split('Delivery Time:')[1].trim();
-                        if (text.includes('Type:')) deliveryType = text.split('Type:')[1].trim();
-                        if (text.includes('Address:')) {
-                            // Address might be in a span element
-                            const addressSpan = p.querySelector('span');
-                            if (addressSpan) {
-                                deliveryAddress = addressSpan.textContent.trim();
-                            } else {
-                                deliveryAddress = text.split('Address:')[1].trim();
-                            }
-                        }
-                    });
-                } else {
-                    // Fallback: try to find delivery info anywhere in the container
-                    console.log('Using fallback method for delivery data');
-                    const allParagraphs = container.querySelectorAll('p');
-                    allParagraphs.forEach(p => {
-                        const text = p.textContent;
-                        if (text.includes('Delivery Date:')) deliveryDate = text.split('Delivery Date:')[1].trim();
-                        if (text.includes('Delivery Time:')) deliveryTime = text.split('Delivery Time:')[1].trim();
-                        if (text.includes('Type:') && !text.includes('Receipt Type:')) deliveryType = text.split('Type:')[1].trim();
-                        if (text.includes('Address:')) {
-                            const addressSpan = p.querySelector('span');
-                            if (addressSpan) {
-                                deliveryAddress = addressSpan.textContent.trim();
-                            } else {
-                                deliveryAddress = text.split('Address:')[1].trim();
-                            }
-                        }
-                    });
-                }
-                console.log('Delivery data extracted:', { deliveryDate, deliveryTime, deliveryType, deliveryAddress });
-                
-                // Extract special instructions from the Instructions section
-                let specialInstructions = '';
-                const instructionsSection = container.querySelector('div[style*="background: #f5f5f5"]');
-                console.log('Instructions section found:', instructionsSection ? 'Yes' : 'No');
-                
-                if (instructionsSection) {
-                    const instructionsP = instructionsSection.querySelector('p');
-                    if (instructionsP) {
-                        const instructionsText = instructionsP.textContent.trim();
-                        if (instructionsText && !instructionsText.includes('None provided')) {
-                            specialInstructions = instructionsText;
-                        }
-                    }
-                } else {
-                    // Fallback: look for instructions in any paragraph
-                    const allParagraphs = container.querySelectorAll('p');
-                    allParagraphs.forEach(p => {
-                        const text = p.textContent;
-                        if (text.toLowerCase().includes('instruction') || text.toLowerCase().includes('allerg') || text.toLowerCase().includes('special')) {
-                            specialInstructions = text.replace(/Special Instructions.*?:/gi, '').trim();
-                        }
-                    });
-                }
-                console.log('Special instructions extracted:', specialInstructions);
+                    const nameEl = customerSection.querySelector('.customer-name');
+                    const phoneEl = customerSection.querySelector('.customer-phone');
+                    const emailEl = customerSection.querySelector('.customer-email');
 
-                // Extract items from the items list
-                const itemsList = container.querySelector('.details-item-list');
+                    if (nameEl) customerName = nameEl.textContent.trim();
+                    if (phoneEl) customerPhone = phoneEl.textContent.trim();
+                    if (emailEl) customerEmail = emailEl.textContent.trim();
+                }
+
+                // Parse Delivery Details
+                let deliveryDate = '', deliveryTime = '', deliveryType = 'Pickup', deliveryAddress = '';
+                const deliverySection = document.getElementById('delivery-details-section');
+                if (deliverySection) {
+                    const dateEl = deliverySection.querySelector('.delivery-date');
+                    const timeEl = deliverySection.querySelector('.delivery-time');
+                    const typeEl = deliverySection.querySelector('.delivery-type');
+                    const addressEl = deliverySection.querySelector('.delivery-address');
+
+                    if (dateEl) deliveryDate = dateEl.textContent.trim();
+                    if (timeEl) deliveryTime = timeEl.textContent.trim();
+                    if (typeEl) deliveryType = typeEl.textContent.trim();
+                    if (addressEl) deliveryAddress = addressEl.textContent.trim();
+                }
+
+                // Parse Items
                 const items = [];
-                if (itemsList) {
-                    const listItems = itemsList.querySelectorAll('li');
+                const itemsSection = document.getElementById('items-section');
+                if (itemsSection) {
+                    const listItems = itemsSection.querySelectorAll('li');
                     listItems.forEach(li => {
-                        const text = li.textContent;
-                        const match = text.match(/^(.+?) \((.+?)\)/);
-                        if (match) {
-                            // Extract instructions if present
-                            const instructionsMatch = text.match(/📝 (.+)$/);
-                            const instructions = instructionsMatch ? instructionsMatch[1].trim() : '';
-                            
-                            // Extract quantity from size name if it contains quantity info
-                            let sizeName = match[2].trim();
+                        // Use text content parsing as backup since we didn't add structured wrappers to list items yet
+                        // Format: <b>Item Name</b> (Qty Size, Spice) details...
+                        const boldEl = li.querySelector('b');
+                        if (boldEl) {
+                            const itemName = boldEl.textContent.trim();
+                            // Get text after bold element
+                            let detailsText = li.textContent.replace(itemName, '').trim();
+                            // Remove parens if they exist at start/end
+                            if (detailsText.startsWith('(')) detailsText = detailsText.substring(1);
+                            if (detailsText.indexOf(')') > 0) detailsText = detailsText.substring(0, detailsText.indexOf(')'));
+
+                            // Extract quantity from details "1 Tray" or "10"
                             let quantity = 1;
-                            const qtyMatch = sizeName.match(/(\d+)\s+(.+)/);
+                            let sizeName = '';
+                            let spiceLevel = 'N/A';
+
+                            const parts = detailsText.split(',');
+                            const firstPart = parts[0].trim(); // "1 Tray" or "1"
+
+                            const qtyMatch = firstPart.match(/(\d+)\s*(.*)/);
                             if (qtyMatch) {
-                                quantity = parseInt(qtyMatch[1]);
-                                sizeName = qtyMatch[2];
+                                quantity = parseInt(qtyMatch[1]) || 1;
+                                sizeName = qtyMatch[2].trim(); // "Tray" or ""
                             }
-                            
+
+                            if (parts.length > 1) {
+                                spiceLevel = parts[1].trim();
+                            }
+
+                            // Instructions
+                            let instructions = '';
+                            const smallEl = li.querySelector('small');
+                            if (smallEl) {
+                                instructions = smallEl.textContent.replace('📝 ', '').trim();
+                            }
+
                             items.push({
-                                itemName: match[1].trim(),
-                                sizeName: sizeName,
-                                spiceLevel: 'N/A',
-                                quantity: quantity,
-                                instructions: instructions
+                                itemName,
+                                sizeName,
+                                spiceLevel,
+                                quantity,
+                                instructions
                             });
                         }
                     });
                 }
-                console.log('Items extracted:', items.length, 'items');
 
-                // Extract pricing information from the Pricing section
-                let totalPrice = '0.00';
-                let subtotal = '0.00';
-                let discountAmount = '0.00';
-                let discountPercent = 0;
-
-                // Look for total price in the pricing block
-                const pricingBlock = container.querySelector('.order-details-pricing-block');
+                // Parse Pricing
+                let totalPrice = '0.00', subtotal = '0.00', discountAmount = '0.00', discountPercent = 0;
+                const pricingBlock = document.querySelector('.order-details-pricing-block');
                 if (pricingBlock) {
-                    // Get main total price
-                    const totalElement = pricingBlock.querySelector('.order-details-price') || 
-                                      pricingBlock.querySelector('[style*="font-size: 32px"]') || 
-                                      pricingBlock.querySelector('[style*="font-size: 24px"]');
-                    if (totalElement) {
-                        totalPrice = totalElement.textContent.replace('$', '').trim();
-                    }
+                    const totalEl = pricingBlock.querySelector('.order-details-price');
+                    if (totalEl) totalPrice = totalEl.textContent.replace('$', '').trim();
 
-                    // Look for subtotal and discount in pricing section
+                    // Try to find subtotal/discount from pricing section
                     const pricingSection = pricingBlock.querySelector('.order-details-pricing');
                     if (pricingSection) {
-                        const pricingParagraphs = pricingSection.querySelectorAll('p');
-                        pricingParagraphs.forEach(p => {
-                            const text = p.textContent;
-                            if (text.includes('Subtotal:')) {
-                                const subtotalMatch = text.match(/\$(\d+\.?\d*)/);
-                                if (subtotalMatch) subtotal = subtotalMatch[1];
+                        const pricePs = pricingSection.querySelectorAll('p');
+                        pricePs.forEach(p => {
+                            if (p.textContent.includes('Subtotal:')) {
+                                subtotal = p.querySelector('span').textContent.replace('$', '').trim();
                             }
-                            if (text.includes('Discount')) {
-                                const percentMatch = text.match(/\((\d+)%\)/);
-                                const amountMatch = text.match(/-?\$(\d+\.?\d*)/);
+                            if (p.textContent.includes('Discount')) {
+                                const discText = p.querySelector('span').textContent.replace('-$', '').trim();
+                                discountAmount = discText;
+                                const percentMatch = p.textContent.match(/\((\d+)%\)/);
                                 if (percentMatch) discountPercent = parseInt(percentMatch[1]);
-                                if (amountMatch) discountAmount = amountMatch[1];
                             }
                         });
                     }
                 }
+                if (subtotal === '0.00') subtotal = totalPrice;
 
-                // If subtotal not found, use total price
-                if (subtotal === '0.00') {
-                    subtotal = totalPrice;
+                // Parse Special Instructions
+                let specialInstructions = '';
+                const instructionsSection = document.getElementById('instructions-section');
+                if (instructionsSection) {
+                    const textEl = instructionsSection.querySelector('.special-instructions-text');
+                    if (textEl) specialInstructions = textEl.textContent.trim();
                 }
-                console.log('Pricing extracted:', { totalPrice, subtotal, discountPercent, discountAmount });
 
-                const extractedData = {
+                console.log('Extracted Data:', { orderId, customerName, items, totalPrice });
+
+                return {
                     orderId,
                     customerName,
                     customerPhone,
@@ -767,202 +863,214 @@
                     deliveryTime,
                     deliveryType,
                     deliveryAddress,
-                    specialInstructions,
                     items,
-                    totalPrice,
                     subtotal,
                     discountPercent,
-                    discountAmount
+                    discountAmount,
+                    totalPrice,
+                    specialInstructions
                 };
-                
-                // Debug log to help troubleshoot
-                console.log('Final extracted order data:', extractedData);
-                
-                return extractedData;
             }
-            
+
             // Add event listeners
             const frontdeskBtn = document.getElementById('print-frontdesk-btn');
             const customerBtn = document.getElementById('print-customer-btn');
             const kitchenBtn = document.getElementById('print-kitchen-btn');
-            
+
             if (frontdeskBtn) {
-                frontdeskBtn.addEventListener('click', function() {
+                frontdeskBtn.addEventListener('click', function () {
                     handlePrint('frontdesk');
                 });
             }
             if (customerBtn) {
-                customerBtn.addEventListener('click', function() {
+                customerBtn.addEventListener('click', function () {
                     handlePrint('customer');
                 });
             }
             if (kitchenBtn) {
-                kitchenBtn.addEventListener('click', function() {
+                kitchenBtn.addEventListener('click', function () {
                     console.log('Kitchen button clicked - calling handlePrint with kitchen mode');
                     handlePrint('kitchen');
                 });
             }
-            
         });
-        </script>
+    </script>
     <style>
-    @media print {
-        #print-frontdesk-btn, #print-customer-btn, #print-kitchen-btn { display: none !important; }
-        .app-header, nav, .btn-secondary, .btn-primary { display: none !important; }
-        body, .container, .form-container { box-shadow: none !important; background: #fff !important; }
-        
-        /* Enhanced Thermal Print Styles - Fixed Layout */
-        body.thermal-print {
-            font-family: 'Courier New', monospace !important;
-            font-size: 11px !important;
-            line-height: 1.2 !important;
-            width: 70mm !important;
-            margin: 0 !important;
-            padding: 0 !important;
+        @media print {
+
+            #print-frontdesk-btn,
+            #print-customer-btn,
+            #print-kitchen-btn {
+                display: none !important;
+            }
+
+            .app-header,
+            nav,
+            .btn-secondary,
+            .btn-primary {
+                display: none !important;
+            }
+
+            body,
+            .container,
+            .form-container {
+                box-shadow: none !important;
+                background: #fff !important;
+            }
+
+            /* Enhanced Thermal Print Styles - Fixed Layout */
+            body.thermal-print {
+                font-family: 'Courier New', monospace !important;
+                font-size: 11px !important;
+                line-height: 1.2 !important;
+                width: 70mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            @page {
+                size: 80mm auto;
+                margin: 2mm;
+            }
+
+            body.thermal-print .container {
+                max-width: 70mm !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            body.thermal-print h2 {
+                text-align: center !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                text-transform: uppercase;
+                margin: 5px 0 !important;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 3px;
+            }
+
+            body.thermal-print .order-details-pricing-block {
+                width: 100% !important;
+            }
+
+            body.thermal-print .order-details-price {
+                font-size: 16px !important;
+                text-align: center !important;
+                font-weight: bold !important;
+                margin: 10px 0 !important;
+            }
+
+            body.thermal-print p {
+                margin: 2px 0 !important;
+                font-size: 10px !important;
+            }
+
+            body.thermal-print strong {
+                font-weight: bold !important;
+            }
+
+            body.thermal-print .details-item-list {
+                list-style: none !important;
+                padding: 0 !important;
+                margin: 5px 0 !important;
+            }
+
+            body.thermal-print .details-item-list li {
+                margin: 3px 0 !important;
+                font-size: 10px !important;
+                border-bottom: none !important;
+            }
+
+            body.thermal-print h3 {
+                font-size: 11px !important;
+                font-weight: bold !important;
+                margin: 8px 0 3px 0 !important;
+                text-transform: uppercase;
+                border-bottom: 1px dashed #000;
+            }
+
+            /* FIX: Convert grid layout to single column for thermal printing */
+            body.thermal-print [style*="display: grid"] {
+                display: block !important;
+                grid-template-columns: none !important;
+                gap: 5px !important;
+            }
+
+            body.thermal-print [style*="grid-template-columns"] {
+                display: block !important;
+                grid-template-columns: none !important;
+            }
+
+            body.thermal-print [style*="grid"]>div {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 8px !important;
+                padding: 5px 0 !important;
+                background: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                border-left: none !important;
+            }
+
+            /* Force all sections to be full width */
+            body.thermal-print div[style*="background: #f8f9fa"],
+            body.thermal-print div[style*="background: #f0fff4"],
+            body.thermal-print div[style*="background: #fffbf0"],
+            body.thermal-print div[style*="background: #fff5f7"],
+            body.thermal-print div[style*="background: #f5f5f5"] {
+                width: 100% !important;
+                display: block !important;
+                background: transparent !important;
+                padding: 5px 0 !important;
+                margin: 5px 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+
+            /* Ensure text doesn't get cut off */
+            body.thermal-print * {
+                max-width: 70mm !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+
+            /* Address line breaking */
+            body.thermal-print p[style*="font-size: 14px"] {
+                font-size: 9px !important;
+                line-height: 1.3 !important;
+                word-break: break-all !important;
+            }
+
+            /* Hide price section for kitchen print */
+            body.print-kitchen .order-details-container .order-details-price,
+            body.print-kitchen .order-details-container .order-details-total,
+            body.print-kitchen .order-details-container .order-details-cashdiscount,
+            body.print-kitchen .order-details-container .order-details-pricing,
+            body.print-kitchen .order-details-container [style*="color: #28a745"],
+            body.print-kitchen .order-details-container [style*="color: #ff6a3d"],
+            body.print-kitchen .order-details-container [style*="color: #f09819"],
+            body.print-kitchen .order-details-container [style*="font-size: 24px"],
+            body.print-kitchen .order-details-container [style*="font-size: 18px"],
+            body.print-kitchen .order-details-container [style*="font-size: 32px"] {
+                display: none !important;
+            }
+
+            /* Additional thermal print optimizations */
+            body.thermal-print .order-details-pricing-block>div {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            body.thermal-print .order-details-pricing-block>div>div {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 10px !important;
+            }
         }
-        
-        @page {
-            size: 80mm auto;
-            margin: 2mm;
-        }
-        
-        body.thermal-print .container {
-            max-width: 70mm !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        
-        body.thermal-print h2 {
-            text-align: center !important;
-            font-size: 14px !important;
-            font-weight: bold !important;
-            text-transform: uppercase;
-            margin: 5px 0 !important;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 3px;
-        }
-        
-        body.thermal-print .order-details-pricing-block {
-            width: 100% !important;
-        }
-        
-        body.thermal-print .order-details-price {
-            font-size: 16px !important;
-            text-align: center !important;
-            font-weight: bold !important;
-            margin: 10px 0 !important;
-        }
-        
-        body.thermal-print p {
-            margin: 2px 0 !important;
-            font-size: 10px !important;
-        }
-        
-        body.thermal-print strong {
-            font-weight: bold !important;
-        }
-        
-        body.thermal-print .details-item-list {
-            list-style: none !important;
-            padding: 0 !important;
-            margin: 5px 0 !important;
-        }
-        
-        body.thermal-print .details-item-list li {
-            margin: 3px 0 !important;
-            font-size: 10px !important;
-            border-bottom: none !important;
-        }
-        
-        body.thermal-print h3 {
-            font-size: 11px !important;
-            font-weight: bold !important;
-            margin: 8px 0 3px 0 !important;
-            text-transform: uppercase;
-            border-bottom: 1px dashed #000;
-        }
-        
-        /* FIX: Convert grid layout to single column for thermal printing */
-        body.thermal-print [style*="display: grid"] {
-            display: block !important;
-            grid-template-columns: none !important;
-            gap: 5px !important;
-        }
-        
-        body.thermal-print [style*="grid-template-columns"] {
-            display: block !important;
-            grid-template-columns: none !important;
-        }
-        
-        body.thermal-print [style*="grid"] > div {
-            display: block !important;
-            width: 100% !important;
-            margin-bottom: 8px !important;
-            padding: 5px 0 !important;
-            background: none !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            border-left: none !important;
-        }
-        
-        /* Force all sections to be full width */
-        body.thermal-print div[style*="background: #f8f9fa"],
-        body.thermal-print div[style*="background: #f0fff4"],
-        body.thermal-print div[style*="background: #fffbf0"],
-        body.thermal-print div[style*="background: #fff5f7"],
-        body.thermal-print div[style*="background: #f5f5f5"] {
-            width: 100% !important;
-            display: block !important;
-            background: transparent !important;
-            padding: 5px 0 !important;
-            margin: 5px 0 !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-        }
-        
-        /* Ensure text doesn't get cut off */
-        body.thermal-print * {
-            max-width: 70mm !important;
-            word-wrap: break-word !important;
-            overflow-wrap: break-word !important;
-        }
-        
-        /* Address line breaking */
-        body.thermal-print p[style*="font-size: 14px"] {
-            font-size: 9px !important;
-            line-height: 1.3 !important;
-            word-break: break-all !important;
-        }
-        
-        /* Hide price section for kitchen print */
-        body.print-kitchen .order-details-container .order-details-price,
-        body.print-kitchen .order-details-container .order-details-total,
-        body.print-kitchen .order-details-container .order-details-cashdiscount,
-        body.print-kitchen .order-details-container .order-details-pricing,
-        body.print-kitchen .order-details-container [style*="color: #28a745"],
-        body.print-kitchen .order-details-container [style*="color: #ff6a3d"],
-        body.print-kitchen .order-details-container [style*="color: #f09819"],
-        body.print-kitchen .order-details-container [style*="font-size: 24px"],
-        body.print-kitchen .order-details-container [style*="font-size: 18px"],
-        body.print-kitchen .order-details-container [style*="font-size: 32px"] {
-            display: none !important;
-        }
-        
-        /* Additional thermal print optimizations */
-        body.thermal-print .order-details-pricing-block > div {
-            display: block !important;
-            width: 100% !important;
-        }
-        
-        body.thermal-print .order-details-pricing-block > div > div {
-            display: block !important;
-            width: 100% !important;
-            margin-bottom: 10px !important;
-        }
-    }
     </style>
 
 </body>
+
 </html>
